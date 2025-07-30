@@ -1,3 +1,5 @@
+//import './globals.css'
+
 export const metadata = {
   title: 'Sistema de Gestion de Visitas Impresistem',
   description: 'Sistema de gestion y aprobación de visitas de los gerentes de producto para Impresistem',
