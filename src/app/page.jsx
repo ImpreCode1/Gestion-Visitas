@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Homepage() {
   return (
     <main>
@@ -6,7 +8,9 @@ export default function Homepage() {
           Aqui estara el sitio principal del Sistema de Gestion de Visitas
         </h1>
       </div>
-      <button>Login</button>
+      <Link href="/login">
+        <button>Login</button>
+      </Link>
       <p>Esta es una aplicacion de ejemplo para el curso de Next.js</p>
     </main>
   );

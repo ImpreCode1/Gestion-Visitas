@@ -1,4 +1,4 @@
-//import './globals.css'
+import './globals.css'
 
 export const metadata = {
   title: 'Sistema de Gestion de Visitas Impresistem',
