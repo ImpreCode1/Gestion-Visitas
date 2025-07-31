@@ -1,5 +1,4 @@
-# Gesti-n-Visitas
-Sistema de gestion y aprobacion de visitas de Impresistem
+# Sistema de gestion y aprobacion de visitas de Impresistem
 =======
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
