@@ -15,14 +15,15 @@ const handleSubmit = async (event) => {
     },
     body: JSON.stringify({ email, password }),
   });
-  if (response.ok) {
-    const data = await response.json();
-    localStorage.setItem("token", data.token);
-    window.location.href = "/prueba"; // Redirigir a la página principal
-  } else {
-    const errorData = await response.json();
-    alert(errorData.error || "Error al iniciar sesión");
+  const data = await response.json();
+
+  if (!response.ok) {
+    alert(data.error || "Error al iniciar sesión");
+    return;
   }
+  
+  alert("Inicio de sesión exitoso");
+  window.location.href = "/prueba";
 };
 
 export default function LoginPage() {
