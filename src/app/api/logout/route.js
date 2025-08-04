@@ -6,6 +6,8 @@ export async function POST() {
     // Eliminar las cookies de token y refreshToken
     response.cookies.delete("token", { path: "/" });
     response.cookies.delete("refreshToken", { path: "/" });
+    response.cookies.delete("x-role", { path: "/" });
+    response.cookies.delete("x-user", { path: "/" });  
 
     return response;
 }

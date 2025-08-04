@@ -7,7 +7,7 @@ const fakeUser = {
     id: 1,
     email: "nombre.apellido@impresistem.com",
     password: bcryptjs.hashSync("123456", 10),
-    role: "Gerente de Producto",
+    role: "gerente",
 };
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -57,7 +57,16 @@ export async function POST(request) {
             value: accesstoken,
             httpOnly: true,
             secure: false, // ← ¡esto es CLAVE en localhost!
-            maxAge: 60*3, // 3 minutos
+            maxAge: 60 * 3, // 3 minutos
+            path: "/",
+        });
+
+        response.cookies.set({
+            name: "x-user",
+            value: fakeUser.email, // o payload.nombre si lo tienes
+            httpOnly: false,
+            secure: false,
+            maxAge: 60 * 60 * 24 *7, // 3 minutos
             path: "/",
         });
 
@@ -66,6 +75,15 @@ export async function POST(request) {
             value: refreshtoken,
             httpOnly: true,
             secure: false, // ← ¡esto es CLAVE en localhost!
+            maxAge: 60 * 60 * 24 * 7, // 7 días
+            path: "/",
+        });
+
+        response.cookies.set({
+            name: "x-role",
+            value: fakeUser.role,
+            httpOnly: false,     // 👈 Se puede leer desde el navegador
+            secure: false,       // 👈 Asegúrate de que funcione en localhost
             maxAge: 60 * 60 * 24 * 7, // 7 días
             path: "/",
         });

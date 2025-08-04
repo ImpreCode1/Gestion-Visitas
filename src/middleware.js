@@ -18,7 +18,7 @@ export async function middleware(request) {
 	}
 
 	try {
-		await jwtVerify(token, accessSecret);
+		const { payload } = await jwtVerify(token, accessSecret);
 		console.log("✅ Token verificado");
 		return NextResponse.next();
 	} catch (error) {
@@ -26,7 +26,6 @@ export async function middleware(request) {
 		return NextResponse.redirect(new URL("/login", request.url));
 	}
 }
-
 
 async function manejarRenovacionToken(request, refreshToken) {
 	if (!refreshToken) {
@@ -37,7 +36,6 @@ async function manejarRenovacionToken(request, refreshToken) {
 	try {
 		const { payload } = await jwtVerify(refreshToken, refreshSecret);
 
-		// Crear nuevo Access Token
 		const newAccessToken = await new SignJWT({
 			id: payload.id,
 			email: payload.email,
@@ -68,5 +66,5 @@ async function manejarRenovacionToken(request, refreshToken) {
 }
 
 export const config = {
-	matcher: ["/prueba"],
+	matcher: ["/agendar_visita"],
 };

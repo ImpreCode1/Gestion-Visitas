@@ -22,8 +22,8 @@ const handleSubmit = async (event) => {
     return;
   }
   
-  alert("Inicio de sesión exitoso");
-  window.location.href = "/prueba";
+  //alert("Inicio de sesión exitoso");
+  window.location.href = "/agendar_visita";
 };
 
 export default function LoginPage() {
