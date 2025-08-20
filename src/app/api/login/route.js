@@ -1,72 +1,85 @@
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
-import { success } from "zod";
 
-const fakeUser = {
-    id: 1,
-    email: "nombre.apellido@impresistem.com",
-    password: bcryptjs.hashSync("123456", 10),
-    role: "gerente",
-};
+const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 export async function POST(request) {
-    const { email, password } = await request.json();
+    try {
+        const { email, password } = await request.json();
 
-    if (!email || !password) {
-        return NextResponse.json(
-            { error: "Email y contraseña son requeridos" },
-            { status: 400 }
-        );
-    }
+        if (!email || !password) {
+            return NextResponse.json(
+                { error: "Email y contraseña son requeridos" },
+                { status: 400 }
+            );
+        }
 
-    if (email !== fakeUser.email) {
-        return NextResponse.json({ error: "Email incorrecto" }, { status: 401 });
-    }
+        // Buscar usuario en la base de datos
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
 
-    // Verificar contraseña
-    if (!bcryptjs.compareSync(password, fakeUser.password)) {
-        return NextResponse.json(
-            { error: "Contraseña incorrecta" },
-            { status: 401 }
-        );
-    }
+        if (!user) {
+            return NextResponse.json(
+                { error: "Usuario no encontrado" },
+                { status: 401 }
+            );
+        }
 
-    if (
-        email === fakeUser.email &&
-        bcryptjs.compareSync(password, fakeUser.password)
-    ) {
+        // Verificar contraseña
+        const isValid = await bcryptjs.compare(password, user.password);
+        if (!isValid) {
+            return NextResponse.json(
+                { error: "Contraseña incorrecta" },
+                { status: 401 }
+            );
+        }
+
+        // Generar tokens
         const accesstoken = jwt.sign(
-            { id: fakeUser.id, email: fakeUser.email, role: fakeUser.role },
+            { id: user.id, email: user.email, role: user.role },
             JWT_SECRET,
-            { expiresIn: "3m" }
+            { expiresIn: "15m" }
         );
 
         const refreshtoken = jwt.sign(
-            { id: fakeUser.id, email: fakeUser.email },
+            { id: user.id, email: user.email, role: user.role },
             JWT_REFRESH_SECRET,
             { expiresIn: "7d" }
         );
 
-        const response = NextResponse.json({ success: true }, { status: 200 });
+        // Responder con cookies
+        const response = NextResponse.json(
+            {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                changePassword: user.changePassword, // <- importante
+            },
+            { status: 200 }
+        );
+
         response.cookies.set({
             name: "token",
             value: accesstoken,
             httpOnly: true,
-            secure: false, // ← ¡esto es CLAVE en localhost!
-            maxAge: 60 * 3, // 3 minutos
+            secure: false, // 👈 en producción cambia a true
+            maxAge: 60 * 15, // 3 minutos
             path: "/",
         });
 
         response.cookies.set({
             name: "x-user",
-            value: fakeUser.email, // o payload.nombre si lo tienes
+            value: user.email,
             httpOnly: false,
             secure: false,
-            maxAge: 60 * 60 * 24 *7, // 3 minutos
+            maxAge: 60 * 60 * 24 * 7,
             path: "/",
         });
 
@@ -74,23 +87,26 @@ export async function POST(request) {
             name: "refreshToken",
             value: refreshtoken,
             httpOnly: true,
-            secure: false, // ← ¡esto es CLAVE en localhost!
-            maxAge: 60 * 60 * 24 * 7, // 7 días
+            secure: false,
+            maxAge: 60 * 60 * 24 * 7,
             path: "/",
         });
 
         response.cookies.set({
             name: "x-role",
-            value: fakeUser.role,
-            httpOnly: false,     // 👈 Se puede leer desde el navegador
-            secure: false,       // 👈 Asegúrate de que funcione en localhost
-            maxAge: 60 * 60 * 24 * 7, // 7 días
+            value: user.role,
+            httpOnly: false,
+            secure: false,
+            maxAge: 60 * 60 * 24 * 7,
             path: "/",
         });
+
         return response;
+    } catch (error) {
+        console.error("Error en login:", error);
+        return NextResponse.json(
+            { error: "Error en el servidor" },
+            { status: 500 }
+        );
     }
-    return NextResponse.json(
-        { error: "Credenciales incorrectas" },
-        { status: 401 }
-    );
 }

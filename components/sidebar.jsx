@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FaSignOutAlt, FaUserCircle, FaClipboardList, FaChartPie } from "react-icons/fa";
+import {
+  FaSignOutAlt,
+  FaUserCircle,
+  FaClipboardList,
+  FaChartPie,
+} from "react-icons/fa";
 import logo from "../public/logo.png";
 import BotonRojo from "./boton_rojo";
 
@@ -12,7 +17,13 @@ const menusPorRol = {
     { label: "Visitas", href: "/visitas", icon: <FaClipboardList /> },
     { label: "Mis gastos", href: "/gastos", icon: <FaChartPie /> },
   ],
-  aprobador: [{ label: "Aprobar solicitudes", href: "/aprobaciones", icon: <FaClipboardList /> }],
+  aprobador: [
+    {
+      label: "Aprobar solicitudes",
+      href: "/aprobaciones",
+      icon: <FaClipboardList />,
+    },
+  ],
   admin: [
     { label: "Usuarios", href: "/usuarios", icon: <FaUserCircle /> },
     { label: "Reportes", href: "/reportes", icon: <FaChartPie /> },
@@ -28,7 +39,18 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
       document.cookie.split("; ").map((c) => c.split("="))
     );
     setRol(cookies["x-role"]);
-    setNombre(cookies["x-user"]);
+
+    const userEmail = cookies["x-user"];
+    if (userEmail) {
+      // Decodificar el valor de la cookie
+      const decodedEmail = decodeURIComponent(userEmail); // "sebastian.ortiz@impresistem.com"
+      const namePart = decodedEmail.split("@")[0]; // "sebastian.ortiz"
+      const formattedName = namePart
+        .split(".")
+        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(" "); // "Sebastian Ortiz"
+      setNombre(formattedName);
+    }
   }, []);
 
   const menus = menusPorRol[rol] || [];
@@ -42,18 +64,22 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
     <>
       {/* Fondo oscuro para móvil cuando está abierto */}
       {sidebarAbierto && (
-        <div 
-          className="fixed inset-0 bg-black opacity-40 z-40 md:hidden" 
-          onClick={() => setSidebarAbierto(false)} 
+        <div
+          className="fixed inset-0 bg-black opacity-40 z-40 md:hidden"
+          onClick={() => setSidebarAbierto(false)}
         />
       )}
-      
+
       {/* Sidebar */}
       <div
         className={`bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white h-screen transition-all duration-300 z-50 flex flex-col shadow-2xl border-r border-slate-700/50
           ${sidebarAbierto ? "w-64" : "w-16"}
           md:relative md:translate-x-0
-          fixed top-0 left-0 transform ${sidebarAbierto ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          fixed top-0 left-0 transform ${
+            sidebarAbierto
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
+          }
         `}
       >
         {/* Botón de plegar */}
@@ -72,12 +98,20 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-30 group-hover:opacity-50 transition-opacity duration-300 blur"></div>
             <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-2 border border-white/20">
-              <Image src={logo} alt="Logo" width={50} height={50} className="rounded-full" />
+              <Image
+                src={logo}
+                alt="Logo"
+                width={50}
+                height={50}
+                className="rounded-full"
+              />
             </div>
           </div>
           {sidebarAbierto && nombre && (
             <div className="mt-3 text-center">
-              <p className="text-sm font-medium text-white/90 break-words px-2">{nombre}</p>
+              <p className="text-lg md:text-xl font-semibold text-white/95 tracking-wide drop-shadow-sm">
+                {nombre}
+              </p>
               <div className="mt-1 h-0.5 w-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto"></div>
             </div>
           )}
@@ -121,18 +155,18 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-30 group-hover:opacity-50 transition-opacity duration-300 blur"></div>
                 <FaUserCircle className="relative text-4xl text-white/90 group-hover:text-white transition-colors duration-200" />
               </div>
-              <BotonRojo 
-                onClick={handleLogout} 
+              <BotonRojo
+                onClick={handleLogout}
                 className="w-full text-center flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border border-red-500/30 backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-red-500/25"
               >
-                <FaSignOutAlt className="text-sm" /> 
+                <FaSignOutAlt className="text-sm" />
                 <span className="font-medium">Salir</span>
               </BotonRojo>
             </div>
           ) : (
             <div className="flex justify-center">
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="group relative text-red-400 text-xl hover:text-white transition-all duration-200 p-2 rounded-xl hover:bg-red-600/20 border border-transparent hover:border-red-500/30 backdrop-blur-sm hover:scale-110 active:scale-95"
                 aria-label="Cerrar sesión"
               >

@@ -6,10 +6,28 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String // Guardaremos el hash, no la contraseña en claro
+  role      Role     @default(gerente)
+  phone     String? // Teléfono de contacto
+  position  String? // Cargo en la empresa (ej. Gerente de producto)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  changePassword Boolean @default(false)
+}
+
+enum Role {
+  admin // Control total, gestiona usuarios
+  gerente // Gerente que organiza las visitas
+  aprobador // Usuario normal (ej. visitante, empleado)
 }
