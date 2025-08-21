@@ -30,7 +30,43 @@ const menusPorRol = {
       icon: <FaClipboardList />,
     },
   ],
-  // otros roles...
+  admin: [
+    {
+      label: "Panel de administración",
+      href: "/admin",
+      icon: <FaChartPie />,
+    },
+  ],
+  aprobador: [
+    {
+      label: "Aprobar visitas",
+      href: "/aprobar_visitas",
+      icon: <FaClipboardList />,
+    },
+  ],
+  trainee: [
+    {
+      label: "Agendar visita",
+      href: "/agendar_visita",
+      icon: <FaClipboardList />,
+    },
+    {
+      label: "Mis visitas",
+      href: "/mis_visitas",
+      icon: <FaChartPie />,
+    },
+    {
+      label: "Legalizar gastos",
+      href: "/legalizar_gastos",
+      icon: <FaClipboardList />,
+    },
+    {
+      label: "Panel de administración",
+      href: "/usuarios",
+      icon: <FaChartPie />,
+    },
+  ],
+  sinRol: [],
 };
 
 export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
@@ -44,7 +80,7 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
         if (res.ok) {
           const data = await res.json();
           setNombre(data.displayName);
-          setRol(data.department);
+          setRol(data.role || "sinRol");
         }
       } catch (err) {
         console.error("Error fetching user info:", err);
@@ -74,7 +110,9 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
           ${sidebarAbierto ? "w-64" : "w-16"}
           md:relative md:translate-x-0
           fixed top-0 left-0 transform ${
-            sidebarAbierto ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            sidebarAbierto
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
           }`}
       >
         {/* Botón de plegar */}
@@ -91,15 +129,19 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-30 group-hover:opacity-50 transition-opacity duration-300 blur" />
             <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-2 border border-white/20">
-              <Image src={logo} alt="Logo" width={50} height={50} className="rounded-full" />
+              <Image
+                src={logo}
+                alt="Logo"
+                width={50}
+                height={50}
+                className="rounded-full"
+              />
             </div>
           </div>
-          {sidebarAbierto && nombre && rol && (
+          {sidebarAbierto && nombre && (
             <div className="mt-3 text-center">
               <p className="text-lg font-semibold text-white/95">{nombre}</p>
               <div className="mt-1 h-0.5 w-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto" />
-              <p><br></br></p>
-              <p className="text-sm text-white/70">{rol}</p>
             </div>
           )}
         </div>

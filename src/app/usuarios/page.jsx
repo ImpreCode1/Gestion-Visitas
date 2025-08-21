@@ -49,12 +49,7 @@ export default function UsuariosPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">
             Gestión de Usuarios
           </h1>
-          <button
-            onClick={() => router.push("/usuarios/crear_usuario")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition w-full sm:w-auto"
-          >
-            + Nuevo Usuario
-          </button>
+        
         </div>
 
         {/* Barra de búsqueda */}

@@ -30,15 +30,33 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
 
+      const meRes = await fetch("/api/me");
+      const meData = await meRes.json();
+      console.log("Datos del usuario:", meData);
+
       Swal.fire({
         title: "Bienvenido",
-        text: `Hola ${data.displayName || email}`,
+        text: `Hola ${meData.displayName || email}`,
         icon: "success",
         timer: 2000,
         showConfirmButton: false,
       });
 
-      router.push("/usuarios");
+      switch (meData.role) {
+        case "gerenteProducto":
+        case "trainee":
+          router.push("/agendar_visita");
+          break;
+        case "admin":
+          router.push("/usuarios");
+          break;
+        case "aprobador":
+          router.push("/aprobaciones");
+          break;
+        default:
+          router.push("/sin_acceso");
+          break;
+      }
     } catch (error) {
       Swal.fire({
         title: "Error",

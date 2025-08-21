@@ -7,63 +7,77 @@
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(gerente)
-  phone     String?
-  position  String?
+  id Int @id @default(autoincrement())
+
+  // Identificador proveniente del AD
+  adGuid   String @unique // objectGUID en AD (globalmente único)
+  username String @unique // sAMAccountName o UPN (ej: jdoe)
+
+  // Datos de perfil que puedes sincronizar del AD
+  name       String
+  email      String  @unique
+  phone      String?
+  position   String?
+  department String?
+
+  // Rol interno en tu aplicación
+  role String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  changePassword Boolean @default(false)
 
-  visitasRegistradas Visita[] @relation("VisitasGerente")  // Visitas que el gerente registró
-  visitasAprobadas   Visita[] @relation("VisitasAprobador") // Quién aprobó la visita
-}
-
-enum Role {
-  admin      // Control total
-  gerente    // Registra visitas y sube documentos
-  aprobador  // Aprueba visitas
+  visitasRegistradas Visita[] @relation("VisitasGerente")
+  visitasAprobadas   Visita[] @relation("VisitasAprobador")
 }
 
 model Visita {
-  id          Int       @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   gerenteId   Int
-  gerente     User      @relation("VisitasGerente", fields: [gerenteId], references: [id])
-  aprobadorId Int?      
-  aprobador   User?     @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
-  cliente     String
+  gerente     User         @relation("VisitasGerente", fields: [gerenteId], references: [id])
+  aprobadorId Int?
+  aprobador   User?        @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
+
+  // 🔹 Información básica de la visita
+  cliente       String       // Nombre del cliente (de momento manual)
+  direccion     String       // Dirección del cliente
+  contacto      String?      // Nombre de la persona de contacto
+  telefono      String?      // Número de contacto
+  personaVisita String?      // A quién se visita específicamente
+  justificacion String?      // Motivo o justificación de la visita
+
+  // 🔹 Información de la visita
   fecha       DateTime
-  lugar       String?
-  objetivo    String?
+  lugar       String?        // Lugar específico (ej: oficina central, sucursal)
+  objetivo    String?        // Objetivo de la visita
   estado      EstadoVisita @default(pendiente)
-  documentos  Documento[]   // Archivos subidos asociados a esta visita
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+
+  // 🔹 Documentos relacionados
+  documentos  Documento[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
+
 enum EstadoVisita {
-  pendiente   // Recién creada
-  aprobada    // Aprobada por el aprobador
-  completada  // Ya realizada y con documentos subidos
+  pendiente // Recién creada
+  aprobada // Aprobada por el aprobador
+  rechazada
+  completada // Ya realizada y con documentos subidos
 }
 
 model Documento {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   visitaId  Int
-  visita    Visita   @relation(fields: [visitaId], references: [id])
+  visita    Visita        @relation(fields: [visitaId], references: [id])
   tipo      TipoDocumento // Ej: factura, foto, comprobante
-  url       String   // Ruta en el servidor o URL de almacenamiento
-  createdAt DateTime @default(now())
+  url       String // Ruta en el servidor o URL de almacenamiento
+  createdAt DateTime      @default(now())
 }
 
 enum TipoDocumento {
