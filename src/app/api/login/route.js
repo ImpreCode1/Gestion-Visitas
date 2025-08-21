@@ -1,6 +1,38 @@
 import { NextResponse } from "next/server";
 import ldap from "ldapjs";
 import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client"
+
+function determinarRol(title = "") {
+    const t = title.toLowerCase();
+    if (
+        t.includes("product manager") ||
+        t.includes("gerente de producto") ||
+        t.includes("gerente producto") ||
+        t.includes("gte de pdto")
+    ) {
+        return "gerenteProducto";
+    } else if (
+        t.includes("admin") ||
+        t.includes("administrador") ||
+        t.includes("director")
+    ) {
+        return "admin";
+    } else if (
+        t.includes("aprobador") ||
+        t.includes("coordinador") ||
+        t.includes("team leader")
+    ) {
+        return "aprobador";
+    } else if (t.includes("trainee")) {
+        return "trainee";
+    } else {
+        return "sinRol";
+    }
+}
+
+
+const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
@@ -42,7 +74,7 @@ export async function POST(request) {
         const opts = {
             filter: `(sAMAccountName=${username})`,
             scope: "sub",
-            attributes: ["displayName", "mail", "department", "title"],
+            attributes: ["displayName", "mail", "department", "title", "telephoneNumber"],
         };
 
         client.search("DC=IMPRESISTEM,DC=local", opts, (err, res) => {
@@ -62,6 +94,29 @@ export async function POST(request) {
     });
 
     client.unbind();
+
+    const role = determinarRol(userInfo.title || "");
+
+    const usuario = await prisma.user.upsert({
+        where: { email },
+        update: {
+            name: userInfo.displayName || "",
+            username,
+            phone: userInfo.telephoneNumber || "",
+            position: userInfo.title || "",
+            department: userInfo.department || "",
+            role,
+        },
+        create: {
+            name: userInfo.displayName || "",
+            username,
+            email,
+            phone: userInfo.telephoneNumber || "",
+            position: userInfo.title || "",
+            department: userInfo.department || "",
+            role,
+        },
+    });
 
     const accesstoken = jwt.sign(
         {

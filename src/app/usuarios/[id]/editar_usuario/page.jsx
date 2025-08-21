@@ -8,7 +8,6 @@ export default function EditarUsuario() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "",
     position: "",
     phone: "",
   });
@@ -26,7 +25,6 @@ export default function EditarUsuario() {
         setFormData({
           name: data.name,
           email: data.email,
-          role: data.role,
           position: data.position || "",
           phone: data.phone || "",
         });
@@ -105,22 +103,6 @@ export default function EditarUsuario() {
               required
               className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Rol</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
-            >
-              <option value="">Selecciona un rol</option>
-              <option value="admin">Administrador</option>
-              <option value="gerente">Gerente de producto</option>
-              <option value="aprobador">Autorizaciones</option>
-            </select>
           </div>
 
           <div>

@@ -15,7 +15,6 @@ model User {
   id Int @id @default(autoincrement())
 
   // Identificador proveniente del AD
-  adGuid   String @unique // objectGUID en AD (globalmente único)
   username String @unique // sAMAccountName o UPN (ej: jdoe)
 
   // Datos de perfil que puedes sincronizar del AD

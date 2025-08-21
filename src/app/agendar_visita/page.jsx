@@ -5,6 +5,11 @@ import { useState } from "react";
 export default function FormularioVisita() {
   const [formData, setFormData] = useState({
     cliente: "",
+    direccion: "",
+    contacto: "",
+    telefono: "",
+    personaVisita: "",
+    justificacion: "",
     fecha: "",
     lugar: "",
     objetivo: "",
@@ -32,7 +37,17 @@ export default function FormularioVisita() {
       if (!res.ok) throw new Error("Error al registrar visita");
 
       setMensaje("¡Visita registrada correctamente!");
-      setFormData({ cliente: "", fecha: "", lugar: "", objetivo: "" });
+      setFormData({
+        cliente: "",
+        direccion: "",
+        contacto: "",
+        telefono: "",
+        personaVisita: "",
+        justificacion: "",
+        fecha:"",
+        lugar: "",
+        objetivo: "",
+      });
     } catch (err) {
       setMensaje(err.message);
     } finally {
@@ -42,56 +57,33 @@ export default function FormularioVisita() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-xl mt-10">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
-        Registrar Visita
-      </h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Registrar Visita</h1>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Cliente
-          </label>
-          <input
-            type="text"
-            name="cliente"
-            value={formData.cliente}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+        {[
+          { label: "Cliente", name: "cliente", type: "text", required: true },
+          { label: "Dirección", name: "direccion", type: "text" },
+          { label: "Contacto", name: "contacto", type: "text" },
+          { label: "Teléfono", name: "telefono", type: "tel" },
+          { label: "Persona a visitar", name: "personaVisita", type: "text" },
+          { label: "Justificación", name: "justificacion", type: "text" },
+          { label: "Fecha de la visita", name: "fecha", type: "date", required: true },
+          { label: "Lugar", name: "lugar", type: "text" },
+        ].map(({ label, name, type, required }) => (
+          <div key={name}>
+            <label className="block text-gray-700 font-medium mb-1">{label}</label>
+            <input
+              type={type}
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              required={required}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+        ))}
 
         <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Fecha de la visita
-          </label>
-          <input
-            type="date"
-            name="fecha"
-            value={formData.fecha}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Lugar
-          </label>
-          <input
-            type="text"
-            name="lugar"
-            value={formData.lugar}
-            onChange={handleChange}
-            placeholder="Dirección u observaciones"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Objetivo de la visita
-          </label>
+          <label className="block text-gray-700 font-medium mb-1">Objetivo de la visita</label>
           <textarea
             name="objetivo"
             value={formData.objetivo}
@@ -105,7 +97,7 @@ export default function FormularioVisita() {
         {mensaje && (
           <p
             className={`text-center font-medium ${
-              mensaje.includes("error") ? "text-red-500" : "text-green-500"
+              mensaje.toLowerCase().includes("error") ? "text-red-500" : "text-green-500"
             }`}
           >
             {mensaje}
