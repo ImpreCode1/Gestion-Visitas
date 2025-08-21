@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
 
 export default function PrivadoLayout({ children }) {
-  const [sidebarAbierto, setSidebarAbierto] = useState(false); // Cerrado por defecto en móvil
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+
+  // Detecta tamaño de pantalla al cargar
+  useEffect(() => {
+    if (window.innerWidth >= 768) { // md breakpoint de Tailwind
+      setSidebarAbierto(true); // Abierto en PC
+    } else {
+      setSidebarAbierto(false); // Cerrado en móvil
+    }
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -16,9 +25,7 @@ export default function PrivadoLayout({ children }) {
       
       {/* Contenido principal */}
       <main 
-        className={`flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300
-          ${sidebarAbierto ? 'md:ml-0' : 'md:ml-0'}
-        `}
+        className={`flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300`}
       >
         {/* Botón flotante para abrir sidebar en móvil */}
         {!sidebarAbierto && (
@@ -32,7 +39,7 @@ export default function PrivadoLayout({ children }) {
         )}
         
         {/* Contenido de la página */}
-        <div className={`${!sidebarAbierto ? 'md:ml-0' : ''}`}>
+        <div>
           {children}
         </div>
       </main>

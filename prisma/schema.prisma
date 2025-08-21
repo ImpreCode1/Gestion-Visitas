@@ -17,17 +17,58 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  password  String // Guardaremos el hash, no la contraseña en claro
+  password  String
   role      Role     @default(gerente)
-  phone     String? // Teléfono de contacto
-  position  String? // Cargo en la empresa (ej. Gerente de producto)
+  phone     String?
+  position  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   changePassword Boolean @default(false)
+
+  visitasRegistradas Visita[] @relation("VisitasGerente")  // Visitas que el gerente registró
+  visitasAprobadas   Visita[] @relation("VisitasAprobador") // Quién aprobó la visita
 }
 
 enum Role {
-  admin // Control total, gestiona usuarios
-  gerente // Gerente que organiza las visitas
-  aprobador // Usuario normal (ej. visitante, empleado)
+  admin      // Control total
+  gerente    // Registra visitas y sube documentos
+  aprobador  // Aprueba visitas
+}
+
+model Visita {
+  id          Int       @id @default(autoincrement())
+  gerenteId   Int
+  gerente     User      @relation("VisitasGerente", fields: [gerenteId], references: [id])
+  aprobadorId Int?      
+  aprobador   User?     @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
+  cliente     String
+  fecha       DateTime
+  lugar       String?
+  objetivo    String?
+  estado      EstadoVisita @default(pendiente)
+  documentos  Documento[]   // Archivos subidos asociados a esta visita
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum EstadoVisita {
+  pendiente   // Recién creada
+  aprobada    // Aprobada por el aprobador
+  completada  // Ya realizada y con documentos subidos
+}
+
+model Documento {
+  id        Int      @id @default(autoincrement())
+  visitaId  Int
+  visita    Visita   @relation(fields: [visitaId], references: [id])
+  tipo      TipoDocumento // Ej: factura, foto, comprobante
+  url       String   // Ruta en el servidor o URL de almacenamiento
+  createdAt DateTime @default(now())
+}
+
+enum TipoDocumento {
+  factura
+  comprobante
+  foto
+  otro
 }
