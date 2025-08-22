@@ -9,13 +9,14 @@ function determinarRol(title = "") {
         t.includes("product manager") ||
         t.includes("gerente de producto") ||
         t.includes("gerente producto") ||
-        t.includes("gte de pdto")
+        t.includes("gte de pdto") ||
+        t.includes("director") ||
+        t.includes("team leader")
     ) {
         return "gerenteProducto";
     } else if (
         t.includes("admin") ||
-        t.includes("administrador") ||
-        t.includes("director")
+        t.includes("administrador")
     ) {
         return "admin";
     } else if (
@@ -124,7 +125,7 @@ export async function POST(request) {
             displayName: userInfo.displayName || "",
             department: userInfo.department || "",
             title: userInfo.title || "",
-            role: userInfo.department || "user",
+            role: role || "user",
         },
         JWT_SECRET,
         { expiresIn: "15m" }
@@ -136,7 +137,7 @@ export async function POST(request) {
             displayName: userInfo.displayName || "",
             department: userInfo.department || "",
             title: userInfo.title || "",
-            role: userInfo.department || "user",
+            role: role || "user",
         },
         JWT_REFRESH_SECRET,
         { expiresIn: "7d" }

@@ -1,82 +1,92 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id Int @id @default(autoincrement())
-
-  // Identificador proveniente del AD
-  username String @unique // sAMAccountName o UPN (ej: jdoe)
-
-  // Datos de perfil que puedes sincronizar del AD
+  id         Int     @id @default(autoincrement())
+  username   String  @unique
   name       String
   email      String  @unique
   phone      String?
   position   String?
   department String?
-
-  // Rol interno en tu aplicación
-  role String
+  role       String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  visitasRegistradas Visita[] @relation("VisitasGerente")
-  visitasAprobadas   Visita[] @relation("VisitasAprobador")
+  visitasRegistradas Visita[]     @relation("VisitasGerente")
+  visitasAprobadas   Visita[]     @relation("VisitasAprobador")
+  aprobaciones       Aprobacion[]
 }
 
 model Visita {
-  id          Int          @id @default(autoincrement())
+  id          Int   @id @default(autoincrement())
   gerenteId   Int
-  gerente     User         @relation("VisitasGerente", fields: [gerenteId], references: [id])
+  gerente     User  @relation("VisitasGerente", fields: [gerenteId], references: [id])
   aprobadorId Int?
-  aprobador   User?        @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
+  aprobador   User? @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
 
-  // 🔹 Información básica de la visita
-  cliente       String       // Nombre del cliente (de momento manual)
-  direccion     String       // Dirección del cliente
-  contacto      String?      // Nombre de la persona de contacto
-  telefono      String?      // Número de contacto
-  personaVisita String?      // A quién se visita específicamente
-  justificacion String?      // Motivo o justificación de la visita
+  // Datos del cliente (se ingresan manualmente)
+  clienteCodigo String
+  cliente       String
 
-  // 🔹 Información de la visita
-  fecha       DateTime
-  lugar       String?        // Lugar específico (ej: oficina central, sucursal)
-  objetivo    String?        // Objetivo de la visita
-  estado      EstadoVisita @default(pendiente)
+  direccion     String
+  ciudad        String?
+  pais          String?
+  contacto      String?
+  telefono      String?
+  personaVisita String?
+  motivo        String
 
-  // 🔹 Documentos relacionados
-  documentos  Documento[]
+  fecha_ida     DateTime
+  fecha_regreso DateTime
+  lugar         String?
+  estado        EstadoVisita @default(pendiente)
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
+  documentos   Documento[]
+  aprobaciones Aprobacion[]
 
-
-enum EstadoVisita {
-  pendiente // Recién creada
-  aprobada // Aprobada por el aprobador
-  rechazada
-  completada // Ya realizada y con documentos subidos
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Documento {
   id        Int           @id @default(autoincrement())
   visitaId  Int
   visita    Visita        @relation(fields: [visitaId], references: [id])
-  tipo      TipoDocumento // Ej: factura, foto, comprobante
-  url       String // Ruta en el servidor o URL de almacenamiento
+  tipo      TipoDocumento
+  url       String
   createdAt DateTime      @default(now())
+}
+
+model Aprobacion {
+  id          Int              @id @default(autoincrement())
+  visitaId    Int
+  visita      Visita           @relation(fields: [visitaId], references: [id])
+  aprobadorId Int
+  aprobador   User             @relation(fields: [aprobadorId], references: [id])
+  estado      EstadoAprobacion @default(pendiente)
+  comentario  String?
+  fecha       DateTime         @default(now())
+}
+
+enum EstadoVisita {
+  pendiente
+  aprobada
+  rechazada
+  completada
+}
+
+enum EstadoAprobacion {
+  pendiente
+  aprobado
+  rechazado
 }
 
 enum TipoDocumento {

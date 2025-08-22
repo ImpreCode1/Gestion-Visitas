@@ -2,33 +2,34 @@
 
 import { useState } from "react";
 
-export default function FormularioVisita() {
+export default function AgendarVisitaPage() {
   const [formData, setFormData] = useState({
-    cliente: "",
+    clienteCodigo: "",
+    cliente: "", // 👈 nuevo campo
+    ciudad: "",
+    pais: "",
     direccion: "",
     contacto: "",
     telefono: "",
     personaVisita: "",
-    justificacion: "",
-    fecha: "",
+    fecha_ida: "",
+    fecha_regreso: "",
     lugar: "",
-    objetivo: "",
+    motivo: "",
+    tiquetes: "",
+    viaticos: "",
+    otrosGastos: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [mensaje, setMensaje] = useState("");
-
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMensaje("");
-
     try {
-      const res = await fetch("/api/visitas", {
+      const res = await fetch("/api/visites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -36,82 +37,185 @@ export default function FormularioVisita() {
 
       if (!res.ok) throw new Error("Error al registrar visita");
 
-      setMensaje("¡Visita registrada correctamente!");
+      alert("✅ Visita registrada correctamente");
       setFormData({
+        clienteCodigo: "",
         cliente: "",
+        ciudad: "",
+        pais: "",
         direccion: "",
         contacto: "",
         telefono: "",
         personaVisita: "",
-        justificacion: "",
-        fecha:"",
+        fecha_ida: "",
+        fecha_regreso: "",
         lugar: "",
-        objetivo: "",
+        motivo: "",
+        tiquetes: "",
+        viaticos: "",
+        otrosGastos: "",
       });
     } catch (err) {
-      setMensaje(err.message);
-    } finally {
-      setLoading(false);
+      alert("❌ " + err.message);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-xl mt-10">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Registrar Visita</h1>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {[
-          { label: "Cliente", name: "cliente", type: "text", required: true },
-          { label: "Dirección", name: "direccion", type: "text" },
-          { label: "Contacto", name: "contacto", type: "text" },
-          { label: "Teléfono", name: "telefono", type: "tel" },
-          { label: "Persona a visitar", name: "personaVisita", type: "text" },
-          { label: "Justificación", name: "justificacion", type: "text" },
-          { label: "Fecha de la visita", name: "fecha", type: "date", required: true },
-          { label: "Lugar", name: "lugar", type: "text" },
-        ].map(({ label, name, type, required }) => (
-          <div key={name}>
-            <label className="block text-gray-700 font-medium mb-1">{label}</label>
-            <input
-              type={type}
-              name={name}
-              value={formData[name]}
-              onChange={handleChange}
-              required={required}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
+      <div className="bg-white shadow-xl rounded-2xl w-full max-w-4xl p-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          📝 Agendar nueva visita
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* 🔹 Datos del Cliente */}
+          <section className="bg-gray-50 p-6 rounded-xl shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              📌 Datos del cliente
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="clienteCodigo"
+                value={formData.clienteCodigo}
+                onChange={handleChange}
+                placeholder="ID o código del cliente"
+                className="border p-3 rounded-lg w-full"
+                required
+              />
+              <input
+                type="text"
+                name="cliente"
+                value={formData.cliente}
+                onChange={handleChange}
+                placeholder="Nombre del cliente"
+                className="border p-3 rounded-lg w-full"
+                required
+              />
+              <input
+                type="text"
+                name="ciudad"
+                value={formData.ciudad}
+                onChange={handleChange}
+                placeholder="Ciudad"
+                className="border p-3 rounded-lg w-full"
+                required
+              />
+              <input
+                type="text"
+                name="pais"
+                value={formData.pais}
+                onChange={handleChange}
+                placeholder="País"
+                className="border p-3 rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleChange}
+                placeholder="Dirección"
+                className="border p-3 rounded-lg w-full"
+                required
+              />
+              <input
+                type="text"
+                name="contacto"
+                value={formData.contacto}
+                onChange={handleChange}
+                placeholder="Persona de contacto"
+                className="border p-3 rounded-lg w-full"
+              />
+              <input
+                type="tel"
+                name="telefono"
+                value={formData.telefono}
+                onChange={handleChange}
+                placeholder="Teléfono"
+                className="border p-3 rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="personaVisita"
+                value={formData.personaVisita}
+                onChange={handleChange}
+                placeholder="Persona a visitar"
+                className="border p-3 rounded-lg w-full"
+              />
+            </div>
+          </section>
+
+          {/* 🔹 Información de la visita */}
+          <section className="bg-gray-50 p-6 rounded-xl shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              📅 Información de la visita
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="fecha_ida"
+                  className="block text-xs font-semibold text-gray-500 mb-2"
+                >
+                  Fecha de ida
+                </label>
+                <input
+                  type="datetime-local"
+                  id="fecha_ida"
+                  name="fecha_ida"
+                  value={formData.fecha_ida}
+                  onChange={handleChange}
+                  className="border p-3 rounded-lg w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="fecha_regreso"
+                  className="block text-xs font-semibold text-gray-500 mb-2"
+                >
+                  Fecha de regreso
+                </label>
+                <input
+                  type="datetime-local"
+                  id="fecha_regreso"
+                  name="fecha_regreso"
+                  value={formData.fecha_regreso}
+                  onChange={handleChange}
+                  className="border p-3 rounded-lg w-full"
+                  required
+                />
+              </div>
+              <input
+                type="text"
+                name="lugar"
+                value={formData.lugar}
+                onChange={handleChange}
+                placeholder="Lugar (oficina, sucursal, etc.)"
+                className="border p-3 rounded-lg w-full"
+              />
+              <input
+                type="text"
+                name="motivo"
+                value={formData.motivo}
+                onChange={handleChange}
+                placeholder="Motivo de la visita"
+                className="border p-3 rounded-lg w-full"
+                required
+              />
+            </div>
+          </section>
+
+          {/* 🔹 Botón */}
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-xl shadow-md transition-all"
+            >
+              Agendar visita
+            </button>
           </div>
-        ))}
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">Objetivo de la visita</label>
-          <textarea
-            name="objetivo"
-            value={formData.objetivo}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Escribe el objetivo de la visita..."
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        {mensaje && (
-          <p
-            className={`text-center font-medium ${
-              mensaje.toLowerCase().includes("error") ? "text-red-500" : "text-green-500"
-            }`}
-          >
-            {mensaje}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold disabled:opacity-50"
-        >
-          {loading ? "Registrando..." : "Registrar Visita"}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
