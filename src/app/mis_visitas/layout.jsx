@@ -9,7 +9,7 @@ export default function PrivadoLayout({ children }) {
   // Detecta tamaño de pantalla al cargar
   useEffect(() => {
     if (window.innerWidth >= 768) { // md breakpoint de Tailwind
-      setSidebarAbierto(true); // Abierto en PC
+      setSidebarAbierto(false); // Abierto en PC
     } else {
       setSidebarAbierto(false); // Cerrado en móvil
     }

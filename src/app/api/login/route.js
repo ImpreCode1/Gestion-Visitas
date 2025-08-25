@@ -95,8 +95,19 @@ export async function POST(request) {
     });
 
     client.unbind();
+    const usuarioExistente = await prisma.user.findUnique({
+        where: { email },
+    });
 
-    const role = determinarRol(userInfo.title || "");
+    let role;
+
+    if (usuarioExistente) {
+        // ✅ Si ya existe en BD, respetamos su rol
+        role = usuarioExistente.role;
+    } else {
+        // 🆕 Si no existe, lo calculamos desde AD
+        role = determinarRol(userInfo.title || "");
+    }
 
     const usuario = await prisma.user.upsert({
         where: { email },
@@ -106,7 +117,6 @@ export async function POST(request) {
             phone: userInfo.telephoneNumber || "",
             position: userInfo.title || "",
             department: userInfo.department || "",
-            role,
         },
         create: {
             name: userInfo.displayName || "",

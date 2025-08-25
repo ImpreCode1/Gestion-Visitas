@@ -28,6 +28,17 @@ export default function AgendarVisitaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.fecha_ida && formData.fecha_regreso) {
+      const fechaIda = new Date(formData.fecha_ida);
+      const fechaRegreso = new Date(formData.fecha_regreso);
+
+      if (fechaRegreso < fechaIda) {
+        alert("❌ La fecha de regreso no puede ser anterior a la fecha de ida");
+        return; // detiene el envío
+      }
+    }
+
     try {
       const res = await fetch("/api/visites", {
         method: "POST",

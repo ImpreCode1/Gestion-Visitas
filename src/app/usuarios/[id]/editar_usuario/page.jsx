@@ -4,18 +4,26 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function EditarUsuario() {
   const router = useRouter();
-  const { id } = useParams(); // id del usuario desde la URL
+  const { id } = useParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     position: "",
     phone: "",
+    role: "sinRol", // 👈 default
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Cargar datos del usuario al montar
+  const rolesDisponibles = [
+    { value: "gerenteProducto", label: "Gerente de Producto" },
+    { value: "admin", label: "Administrador" },
+    { value: "aprobador", label: "Aprobador" },
+    { value: "trainee", label: "Trainee" },
+    { value: "sinRol", label: "Sin Rol" },
+  ];
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -27,6 +35,7 @@ export default function EditarUsuario() {
           email: data.email,
           position: data.position || "",
           phone: data.phone || "",
+          role: data.role || "sinRol", // 👈 incluir role
         });
       } catch (err) {
         console.error(err);
@@ -126,6 +135,23 @@ export default function EditarUsuario() {
               placeholder="Opcional"
               className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
             />
+          </div>
+
+          {/* Nuevo select para rol */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Rol</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
+            >
+              {rolesDisponibles.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button

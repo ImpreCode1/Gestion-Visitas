@@ -106,14 +106,14 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
       )}
 
       <div
-        className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white h-screen transition-all duration-300 z-50 flex flex-col shadow-xl border-r border-slate-700
-          ${sidebarAbierto ? "w-64" : "w-16"}
-          md:relative md:translate-x-0
-          fixed top-0 left-0 transform ${
-            sidebarAbierto
-              ? "translate-x-0"
-              : "-translate-x-full md:translate-x-0"
-          }`}
+        className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white h-screen transition-all duration-300 z-50 flex flex-col shadow-lg border-r border-slate-700
+        ${sidebarAbierto ? "w-56" : "w-16"}   // 👈 más compacto
+        md:relative md:translate-x-0
+        fixed top-0 left-0 transform ${
+          sidebarAbierto
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
+        }`}
       >
         {/* Botón de plegar */}
         <button

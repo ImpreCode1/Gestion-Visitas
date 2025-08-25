@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = globalThis.__prismaClient || new PrismaClient();
 if (!globalThis.__prismaClient) globalThis.__prismaClient = prisma;
 
-// GET user by ID
+// GET user by ID (ignora eliminados)
 export async function GET(request, { params }) {
   const { id } = await params;
   const userId = parseInt(id, 10);
@@ -13,8 +13,11 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null }, // 👈 no devuelvas eliminados
+    });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
@@ -22,7 +25,8 @@ export async function GET(request, { params }) {
   }
 }
 
-// DELETE user by ID
+
+// DELETE (soft delete) user by ID
 export async function DELETE(request, { params }) {
   const { id } = await params;
   const userId = parseInt(id, 10);
@@ -31,11 +35,15 @@ export async function DELETE(request, { params }) {
   }
 
   try {
-    const user = await prisma.user.delete({ where: { id: userId } });
-    return NextResponse.json({ message: "User deleted successfully", user });
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() }, // 👈 marcar soft delete
+    });
+    return NextResponse.json({ message: "User soft-deleted successfully", user });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    if (error?.code === "P2025") return NextResponse.json({ error: "User not found" }, { status: 404 });
+    console.error("Error soft-deleting user:", error);
+    if (error?.code === "P2025")
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
