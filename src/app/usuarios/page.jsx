@@ -125,7 +125,7 @@ export default function UsuariosPage() {
                         onClick={async () => {
                           if (
                             !confirm(
-                              "¿Seguro que deseas eliminar este usuario?"
+                              "¿Seguro que deseas inactivar este usuario?"
                             )
                           )
                             return;
@@ -147,7 +147,7 @@ export default function UsuariosPage() {
                         }}
                         className="px-3 py-1 text-sm sm:text-base bg-red-500 text-white rounded-md hover:bg-red-600 transition w-full sm:w-auto"
                       >
-                        Eliminar
+                        Inactivar
                       </button>
                     </td>
                   </tr>
