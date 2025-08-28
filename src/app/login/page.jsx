@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import { FaUser, FaLock } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,12 +26,10 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
 
       const meRes = await fetch("/api/me");
       const meData = await meRes.json();
-      console.log("Datos del usuario:", meData);
 
       Swal.fire({
         title: "Bienvenido",
@@ -69,63 +66,82 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 to-blue-300">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg transition-all duration-300 hover:shadow-2xl">
-        <h2 className="mb-6 text-center text-3xl font-extrabold text-blue-700">
-          Log In
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-semibold text-gray-700"
-            >
-              Usuario
-            </label>
-            <div className="relative mt-1">
-              <FaUser className="absolute left-3 top-3 text-gray-400" />
-              <input
-                type="text"
-                id="email"
-                name="email"
-                required
-                placeholder="nombre.apellido"
-                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+        {/* Fondo diagonal */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-700 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-semibold text-gray-700"
-            >
-              Contraseña
-            </label>
-            <div className="relative mt-1">
-              <FaLock className="absolute left-3 top-3 text-gray-400" />
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <div className="relative px-6 py-10 bg-white shadow-lg sm:rounded-3xl sm:px-16 sm:py-16">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+              Iniciar Sesión
+            </h1>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-2 font-semibold text-white transition-colors duration-200 hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Iniciando..." : "Ingresar"}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-gray-500">
-          © Impresistem {new Date().getFullYear()}
-        </p>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Usuario */}
+              <div className="relative">
+                <input
+                  id="email"
+                  name="email"
+                  type="text"
+                  autoComplete="off"
+                  required
+                  placeholder="Usuario"
+                  className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 
+                             focus:outline-none focus:border-cyan-500"
+                />
+                <label
+                  htmlFor="email"
+                  className="absolute left-0 -top-3.5 text-gray-600 text-sm 
+                             peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 
+                             peer-placeholder-shown:top-2 transition-all 
+                             peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
+                >
+                  Usuario
+                </label>
+              </div>
+
+              {/* Contraseña */}
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="Contraseña"
+                  className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 
+                             focus:outline-none focus:border-cyan-500"
+                />
+                <label
+                  htmlFor="password"
+                  className="absolute left-0 -top-3.5 text-gray-600 text-sm 
+                             peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 
+                             peer-placeholder-shown:top-2 transition-all 
+                             peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
+                >
+                  Contraseña
+                </label>
+              </div>
+
+              {/* Botón */}
+              <div className="relative">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-md px-4 py-2 
+                             transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Iniciando..." : "Ingresar"}
+                </button>
+              </div>
+            </form>
+
+            {/* Footer */}
+            <p className="mt-6 text-center text-sm text-gray-500">
+              © Impresistem {new Date().getFullYear()}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

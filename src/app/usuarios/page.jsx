@@ -45,11 +45,16 @@ export default function UsuariosPage() {
     <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Encabezado */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 text-center flex-1">
             Gestión de Usuarios
           </h1>
-        
+          <a
+            href="/usuarios/aprobadores"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+          >
+            Ver Aprobadores
+          </a>
         </div>
 
         {/* Barra de búsqueda */}

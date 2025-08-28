@@ -6,65 +6,32 @@ import Image from "next/image";
 import {
   FaSignOutAlt,
   FaUserCircle,
+  FaCalendarAlt,
   FaClipboardList,
-  FaChartPie,
+  FaMoneyBill,
+  FaUserShield,
+  FaCheckCircle,
 } from "react-icons/fa";
 import logo from "../public/logo.png";
 import BotonRojo from "./boton_rojo";
 
 const menusPorRol = {
   gerenteProducto: [
-    {
-      label: "Agendar visita",
-      href: "/agendar_visita",
-      icon: <FaClipboardList />,
-    },
-    {
-      label: "Mis visitas",
-      href: "/mis_visitas",
-      icon: <FaChartPie />,
-    },
-    {
-      label: "Legalizar gastos",
-      href: "/legalizar_gastos",
-      icon: <FaClipboardList />,
-    },
+    { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },
+    { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
+    { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
   ],
   admin: [
-    {
-      label: "Panel de administración",
-      href: "/admin",
-      icon: <FaChartPie />,
-    },
+    { label: "Panel de administración", href: "/admin", icon: <FaUserShield /> },
   ],
   aprobador: [
-    {
-      label: "Aprobar visitas",
-      href: "/aprobar_visitas",
-      icon: <FaClipboardList />,
-    },
+    { label: "Aprobar visitas", href: "/aprobar_visitas", icon: <FaCheckCircle /> },
   ],
   trainee: [
-    {
-      label: "Agendar visita",
-      href: "/agendar_visita",
-      icon: <FaClipboardList />,
-    },
-    {
-      label: "Mis visitas",
-      href: "/mis_visitas",
-      icon: <FaChartPie />,
-    },
-    {
-      label: "Legalizar gastos",
-      href: "/legalizar_gastos",
-      icon: <FaClipboardList />,
-    },
-    {
-      label: "Panel de administración",
-      href: "/usuarios",
-      icon: <FaChartPie />,
-    },
+    { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },
+    { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
+    { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
+    { label: "Panel de administración", href: "/usuarios", icon: <FaUserShield /> },
   ],
   sinRol: [],
 };
@@ -98,6 +65,7 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
 
   return (
     <>
+      {/* Overlay en mobile */}
       {sidebarAbierto && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -105,96 +73,81 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
         />
       )}
 
-      <div
-        className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white h-screen transition-all duration-300 z-50 flex flex-col shadow-lg border-r border-slate-700
-        ${sidebarAbierto ? "w-56" : "w-16"}   // 👈 más compacto
-        md:relative md:translate-x-0
-        fixed top-0 left-0 transform ${
-          sidebarAbierto
-            ? "translate-x-0"
-            : "-translate-x-full md:translate-x-0"
-        }`}
+      <aside
+        className={`bg-gray-800 text-white fixed md:static top-0 left-0 h-screen transition-all duration-300 z-50 flex flex-col
+        ${sidebarAbierto ? "w-64" : "w-16"} 
+        ${sidebarAbierto ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}
       >
-        {/* Botón de plegar */}
-        <button
-          onClick={() => setSidebarAbierto(!sidebarAbierto)}
-          className="m-3 p-2 text-xl hover:bg-white/10 rounded-full transition-all duration-200 self-end"
-          aria-label={sidebarAbierto ? "Cerrar sidebar" : "Abrir sidebar"}
-        >
-          {sidebarAbierto ? "⮜" : "☰"}
-        </button>
-
-        {/* Logo y nombre */}
-        <div className="flex flex-col items-center py-6 px-4 border-b border-white/10 bg-white/5 mx-3 rounded-xl mb-4">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-30 group-hover:opacity-50 transition-opacity duration-300 blur" />
-            <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-2 border border-white/20">
-              <Image
-                src={logo}
-                alt="Logo"
-                width={50}
-                height={50}
-                className="rounded-full"
-              />
-            </div>
-          </div>
-          {sidebarAbierto && nombre && (
-            <div className="mt-3 text-center">
-              <p className="text-lg font-semibold text-white/95">{nombre}</p>
-              <div className="mt-1 h-0.5 w-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto" />
+        {/* Header con logo */}
+        <div className="py-4 px-2 flex items-center justify-between bg-gray-900 border-b border-gray-700">
+          {sidebarAbierto && (
+            <div className="flex items-center gap-2">
+              <Image src={logo} alt="Logo" width={35} height={35} />
+              <span className="uppercase tracking-widest text-sm font-bold">
+                Visitas
+              </span>
             </div>
           )}
+          <button
+            onClick={() => setSidebarAbierto(!sidebarAbierto)}
+            className="p-2 hover:bg-gray-700 rounded-md"
+            aria-label={sidebarAbierto ? "Cerrar sidebar" : "Abrir sidebar"}
+          >
+            {sidebarAbierto ? "⮜" : "☰"}
+          </button>
         </div>
 
         {/* Menú */}
-        <nav className="flex-1 px-3 space-y-2">
-          {menus.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-600/30 hover:to-purple-600/30 transition-all duration-200 text-sm border border-transparent hover:border-white/10 backdrop-blur-sm hover:shadow-md"
-              onClick={() => {
-                if (window.innerWidth < 768) setSidebarAbierto(false);
-              }}
-            >
-              <span className="text-lg text-white/80 group-hover:text-white transition-colors duration-200">
-                {item.icon}
-              </span>
-              {sidebarAbierto && (
-                <span className="font-medium text-white/90 group-hover:text-white transition-colors duration-200">
-                  {item.label}
-                </span>
-              )}
-            </Link>
-          ))}
+        <nav className="flex-1 overflow-y-auto text-sm">
+          <ul className="flex flex-col py-4">
+            {menus.map((item) => (
+              <li key={item.href} className="px-2">
+                <Link
+                  href={item.href}
+                  className="flex items-center gap-3 py-3 px-2 rounded-md hover:bg-gray-700 transition"
+                  onClick={() => {
+                    if (window.innerWidth < 768) setSidebarAbierto(false);
+                  }}
+                >
+                  <span className="w-5 h-5 flex items-center justify-center text-gray-400">
+                    {item.icon}
+                  </span>
+                  {sidebarAbierto && (
+                    <span className="text-gray-200">{item.label}</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </nav>
 
-        {/* Usuario y logout */}
-        <div className="mt-auto px-3 py-4 border-t border-white/10 bg-white/5 mx-3 rounded-t-xl">
+        {/* Usuario + logout */}
+        <div className="border-t border-gray-700 p-3">
           {sidebarAbierto ? (
-            <div className="flex flex-col items-center gap-3">
-              <FaUserCircle className="text-4xl text-white/90" />
+            <div className="flex flex-col items-center gap-2">
+              <FaUserCircle className="text-4xl text-gray-300" />
+              <p className="text-sm">{nombre}</p>
               <BotonRojo
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border border-red-500/30 backdrop-blur-sm transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-red-500/25"
+                className="w-full flex items-center justify-center gap-2"
               >
                 <FaSignOutAlt className="text-sm" />
-                <span className="font-medium">Salir</span>
+                <span>Salir</span>
               </BotonRojo>
             </div>
           ) : (
             <div className="flex justify-center">
               <button
                 onClick={handleLogout}
-                className="group text-red-400 text-xl hover:text-white transition-all duration-200 p-2 rounded-full hover:bg-red-600/20 border border-transparent hover:border-red-500/30 backdrop-blur-sm hover:scale-110 active:scale-95"
-                aria-label="Cerrar sesión"
+                className="p-2 text-red-400 hover:text-white hover:bg-red-600/20 rounded-full"
               >
                 <FaSignOutAlt />
               </button>
             </div>
           )}
         </div>
-      </div>
+      </aside>
     </>
   );
 }
