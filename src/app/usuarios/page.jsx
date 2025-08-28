@@ -7,6 +7,7 @@ export default function UsuariosPage() {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [rolFiltro, setRolFiltro] = useState("todos");
   const router = useRouter();
 
   // Cargar usuarios desde la API
@@ -32,14 +33,19 @@ export default function UsuariosPage() {
   // Filtrar usuarios cuando cambia el search
   useEffect(() => {
     const term = search.toLowerCase();
-    setFilteredUsers(
-      users.filter(
-        (u) =>
-          u.name.toLowerCase().includes(term) ||
-          u.email.toLowerCase().includes(term)
-      )
-    );
-  }, [search, users]);
+
+    const filtrados = users.filter((u) => {
+      const coincideBusqueda =
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term);
+
+      const coincideRol = rolFiltro === "todos" || u.role === rolFiltro;
+
+      return coincideBusqueda && coincideRol;
+    });
+
+    setFilteredUsers(filtrados);
+  }, [search, rolFiltro, users]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
@@ -49,16 +55,10 @@ export default function UsuariosPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 text-center flex-1">
             Gestión de Usuarios
           </h1>
-          <a
-            href="/usuarios/aprobadores"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
-          >
-            Ver Aprobadores
-          </a>
         </div>
 
         {/* Barra de búsqueda */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <input
             type="text"
             placeholder="Buscar por nombre o email..."
@@ -66,6 +66,19 @@ export default function UsuariosPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-1/3 px-4 py-2 border rounded-lg focus:ring focus:ring-blue-200"
           />
+
+          <select
+            value={rolFiltro}
+            onChange={(e) => setRolFiltro(e.target.value)}
+            className="w-full sm:w-1/4 px-4 py-2 border rounded-lg focus:ring focus:ring-blue-200"
+          >
+            <option value="todos">Todos los roles</option>
+            <option value="admin">Administrador</option>
+            <option value="aprobador">Aprobador</option>
+            <option value="gerenteProducto">Gerente de Producto</option>
+            <option value="trainee">Trainee</option>
+            <option value="sinRol">Sin Rol</option>
+          </select>
         </div>
 
         {/* Tabla de usuarios */}

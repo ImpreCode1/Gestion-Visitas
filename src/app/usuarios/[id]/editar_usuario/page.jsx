@@ -58,11 +58,18 @@ export default function EditarUsuario() {
     setSuccess("");
     setLoading(true);
 
+    // Si el rol no es aprobador, aseguramos que tipoaprobador sea null
+    const datosAEnviar = {
+      ...formData,
+      tipoaprobador:
+        formData.role === "aprobador" ? formData.tipoaprobador : null,
+    };
+
     try {
       const res = await fetch(`/api/users/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(datosAEnviar),
       });
 
       if (!res.ok) throw new Error("Error al actualizar usuario");
@@ -83,7 +90,9 @@ export default function EditarUsuario() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-8">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-blue-800 mb-4">Editar Usuario</h1>
+        <h1 className="text-2xl font-bold text-blue-800 mb-4">
+          Editar Usuario
+        </h1>
         <p className="text-gray-600 mb-6">Modifica los datos del usuario.</p>
 
         {error && <p className="text-red-600 mb-3">{error}</p>}
@@ -91,7 +100,9 @@ export default function EditarUsuario() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Nombre
+            </label>
             <input
               type="text"
               name="name"
@@ -103,7 +114,9 @@ export default function EditarUsuario() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -115,7 +128,9 @@ export default function EditarUsuario() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Cargo</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Cargo
+            </label>
             <input
               type="text"
               name="position"
@@ -126,7 +141,9 @@ export default function EditarUsuario() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Teléfono
+            </label>
             <input
               type="text"
               name="phone"
@@ -139,7 +156,9 @@ export default function EditarUsuario() {
 
           {/* Nuevo select para rol */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Rol</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Rol
+            </label>
             <select
               name="role"
               value={formData.role}
@@ -153,6 +172,24 @@ export default function EditarUsuario() {
               ))}
             </select>
           </div>
+          {formData.role === "aprobador" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Tipo de Aprobador
+              </label>
+              <select
+                name="tipoaprobador"
+                value={formData.tipoaprobador}
+                onChange={handleChange}
+                className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
+                required
+              >
+                <option value="">Selecciona una opción</option>
+                <option value="local">Local (Bogotá)</option>
+                <option value="nacional">Nacional (Fuera de Bogotá)</option>
+              </select>
+            </div>
+          )}
 
           <button
             type="submit"

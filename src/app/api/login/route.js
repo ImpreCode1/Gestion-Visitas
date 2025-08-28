@@ -20,9 +20,8 @@ function determinarRol(title = "") {
     ) {
         return "admin";
     } else if (
-        t.includes("aprobador") ||
-        t.includes("coordinador") ||
-        t.includes("team leader")
+        t.includes("internal procurement") ||
+        t.includes("internal supply")
     ) {
         return "aprobador";
     } else if (t.includes("trainee")) {
@@ -99,7 +98,7 @@ export async function POST(request) {
         where: { email },
     });
 
-    let role;
+    let role, tipoaprobador = "null";
 
     if (usuarioExistente) {
         // ✅ Si ya existe en BD, respetamos su rol
@@ -107,6 +106,13 @@ export async function POST(request) {
     } else {
         // 🆕 Si no existe, lo calculamos desde AD
         role = determinarRol(userInfo.title || "");
+        if (role == "approbador"){
+            if (title.includes("internal procurement")){
+                tipoaprobador = "nacional"
+            } else if (title.includes("supply")){
+                tipoaprobador = "local"
+            }
+        }
     }
 
     const usuario = await prisma.user.upsert({
@@ -126,6 +132,7 @@ export async function POST(request) {
             position: userInfo.title || "",
             department: userInfo.department || "",
             role,
+            tipoaprobador
         },
     });
 

@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id         Int     @id @default(autoincrement())
-  username   String  @unique
-  name       String
-  email      String  @unique
-  phone      String?
-  position   String?
-  department String?
-  role       String
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  name          String
+  email         String         @unique
+  phone         String?
+  position      String?
+  department    String?
+  role          String
+  tipoaprobador TipoAprobador? @default(null)
 
-  deletedAt DateTime? 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   visitasRegistradas Visita[]     @relation("VisitasGerente")
   visitasAprobadas   Visita[]     @relation("VisitasAprobador")
@@ -95,4 +96,10 @@ enum TipoDocumento {
   comprobante
   foto
   otro
+}
+
+enum TipoAprobador {
+  null
+  local
+  nacional
 }
