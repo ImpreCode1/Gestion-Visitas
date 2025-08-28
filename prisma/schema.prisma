@@ -102,4 +102,5 @@ enum TipoAprobador {
   null
   local
   nacional
+  internacional
 }

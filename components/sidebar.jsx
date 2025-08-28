@@ -32,6 +32,7 @@ const menusPorRol = {
     { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
     { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
     { label: "Panel de administración", href: "/usuarios", icon: <FaUserShield /> },
+    { label: "Aprobaciones", href: "/aprobaciones", icon: <FaCheckCircle /> },
   ],
   sinRol: [],
 };

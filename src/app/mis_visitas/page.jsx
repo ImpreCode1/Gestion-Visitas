@@ -36,6 +36,9 @@ export default function MisVisitas() {
           estado: v.estado, // 👈 asegurarse de que la API lo devuelva
           cliente: v.cliente,
           motivo: v.motivo,
+          ciudad: v.ciudad,
+          pais: v.pais,
+          personaVisita: v.personaVisita
         }));
 
         setVisitas(eventos);
@@ -112,7 +115,12 @@ export default function MisVisitas() {
       {tab === "calendario" ? (
         <div className="bg-white rounded-2xl shadow-md p-2 md:p-4">
           <FullCalendar
-            plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin]}
+            plugins={[
+              dayGridPlugin,
+              interactionPlugin,
+              timeGridPlugin,
+              listPlugin,
+            ]}
             initialView={isMobile ? "listWeek" : "dayGridMonth"}
             headerToolbar={{
               left: "prev,next today",
@@ -130,9 +138,9 @@ export default function MisVisitas() {
             events={eventosConColor}
             eventClick={(info) => {
               alert(
-                `Visita: ${info.event.title}\nEstado: ${visitas.find(
-                  (v) => v.id === info.event.id
-                )?.estado}`
+                `Visita: ${info.event.title}\nEstado: ${
+                  visitas.find((v) => v.id === info.event.id)?.estado
+                }`
               );
             }}
             height="auto"
@@ -145,6 +153,9 @@ export default function MisVisitas() {
               <tr className="text-left border-b bg-gray-50">
                 <th className="p-2">Cliente</th>
                 <th className="p-2">Motivo</th>
+                <th className="p-2">Ciudad</th>
+                <th className="p-2">País</th>
+                <th className="p-2">Persona a Visitar</th>
                 <th className="p-2">Fecha</th>
                 <th className="p-2">Estado</th>
               </tr>
@@ -154,6 +165,9 @@ export default function MisVisitas() {
                 <tr key={v.id} className="border-b hover:bg-gray-50">
                   <td className="p-2">{v.cliente}</td>
                   <td className="p-2">{v.motivo}</td>
+                  <td className="p-2">{v.ciudad || "-"}</td>
+                  <td className="p-2">{v.pais || "-"}</td>
+                  <td className="p-2">{v.personaVisita || "-"}</td>
                   <td className="p-2">
                     {new Date(v.start).toLocaleDateString()} -{" "}
                     {new Date(v.end).toLocaleDateString()}
