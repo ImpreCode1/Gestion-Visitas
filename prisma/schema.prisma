@@ -76,6 +76,9 @@ model Aprobacion {
   estado      EstadoAprobacion @default(pendiente)
   comentario  String?
   fecha       DateTime         @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum EstadoVisita {

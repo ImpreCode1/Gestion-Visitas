@@ -74,7 +74,7 @@ export async function POST(request) {
         const opts = {
             filter: `(sAMAccountName=${username})`,
             scope: "sub",
-            attributes: ["displayName", "mail", "department", "title", "telephoneNumber"],
+            attributes: ["displayName", "mail", "department", "title","mobile"],
         };
 
         client.search("DC=IMPRESISTEM,DC=local", opts, (err, res) => {
@@ -120,7 +120,7 @@ export async function POST(request) {
         update: {
             name: userInfo.displayName || "",
             username,
-            phone: userInfo.telephoneNumber || "",
+            phone: userInfo.mobile || "",
             position: userInfo.title || "",
             department: userInfo.department || "",
         },
@@ -128,7 +128,7 @@ export async function POST(request) {
             name: userInfo.displayName || "",
             username,
             email,
-            phone: userInfo.telephoneNumber || "",
+            phone: userInfo.mobile || "",
             position: userInfo.title || "",
             department: userInfo.department || "",
             role,
