@@ -26,6 +26,8 @@ function determinarRol(title = "") {
         return "aprobador";
     } else if (t.includes("trainee")) {
         return "trainee";
+    } else if (t.includes("vicepresident")){
+        return "vicepresidente"
     } else {
         return "sinRol";
     }

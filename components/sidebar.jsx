@@ -27,6 +27,12 @@ const menusPorRol = {
     { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
     { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
   ],
+  vicepresidente: [
+    { label: "Solicitudes", href: "/admin", icon: <FaUserShield /> },
+    { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },
+    { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
+    { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
+  ],
   aprobador: [
     { label: "Aprobar visitas", href: "/aprobaciones", icon: <FaCheckCircle /> },
     { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },

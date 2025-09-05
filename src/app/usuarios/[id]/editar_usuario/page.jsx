@@ -17,9 +17,10 @@ export default function EditarUsuario() {
   const [success, setSuccess] = useState("");
 
   const rolesDisponibles = [
-    { value: "gerenteProducto", label: "Gerente de Producto" },
+    { value: "gerenteProducto", label: "Gerente de Producto, Team Leader o Director" },
     { value: "admin", label: "Administrador" },
     { value: "aprobador", label: "Aprobador" },
+    { value: "vicepresidente", label: "Vicepresidente"},
     { value: "trainee", label: "Trainee" },
     { value: "sinRol", label: "Sin Rol" },
   ];
