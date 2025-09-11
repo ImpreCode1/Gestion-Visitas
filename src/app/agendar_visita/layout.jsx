@@ -1,33 +1,42 @@
-"use client";
+"use client"; 
+// Indica que este componente se ejecuta en el cliente (Next.js App Router).
 
 import { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
 
+// Layout privado que incluye un sidebar y el contenido principal
 export default function PrivadoLayout({ children }) {
+  // Estado para controlar si el sidebar está abierto o cerrado
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
-  // Detecta tamaño de pantalla al cargar
+  // Al cargar el componente, se detecta el tamaño de pantalla inicial
   useEffect(() => {
-    if (window.innerWidth >= 768) { // md breakpoint de Tailwind
-      setSidebarAbierto(true); // Abierto en PC
+    if (window.innerWidth >= 768) { 
+      // Si el ancho es mayor o igual a 768px (breakpoint md en Tailwind), 
+      // se abre el sidebar automáticamente (versión escritorio).
+      setSidebarAbierto(true);
     } else {
-      setSidebarAbierto(false); // Cerrado en móvil
+      // En dispositivos móviles se inicia cerrado.
+      setSidebarAbierto(false);
     }
   }, []);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar lateral. 
+          Recibe el estado y el setter para poder controlar su apertura/cierre 
+          desde dentro del componente hijo. */}
       <Sidebar 
         sidebarAbierto={sidebarAbierto} 
         setSidebarAbierto={setSidebarAbierto} 
       />
       
-      {/* Contenido principal */}
+      {/* Contenedor principal de la página */}
       <main 
-        className={`flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300`}
+        className="flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300"
       >
-        {/* Botón flotante para abrir sidebar en móvil */}
+        {/* Botón hamburguesa (solo visible en móvil) 
+            Permite abrir el sidebar cuando está cerrado. */}
         {!sidebarAbierto && (
           <button
             onClick={() => setSidebarAbierto(true)}
@@ -38,7 +47,7 @@ export default function PrivadoLayout({ children }) {
           </button>
         )}
         
-        {/* Contenido de la página */}
+        {/* Aquí se renderiza el contenido específico de cada página */}
         <div>
           {children}
         </div>

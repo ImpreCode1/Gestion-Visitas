@@ -7,19 +7,28 @@ import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 
+// Componente para mostrar las visitas del usuario
 export default function MisVisitas() {
-  const [visitas, setVisitas] = useState([]);
-  const [isMobile, setIsMobile] = useState(false);
-  const [tab, setTab] = useState("calendario"); // 👈 controla vista activa
+  // -----------------------------
+  // Estados
+  // -----------------------------
+  const [visitas, setVisitas] = useState([]); // Lista de visitas
+  const [isMobile, setIsMobile] = useState(false); // Detecta móvil
+  const [tab, setTab] = useState("calendario"); // Tab activo: "calendario" o "estado"
 
+  // -----------------------------
+  // Detectar tamaño de pantalla
+  // -----------------------------
   useEffect(() => {
-    // Detectar si es móvil
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
+    handleResize(); // Revisar al cargar
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // -----------------------------
+  // Fetch de visitas desde la API
+  // -----------------------------
   useEffect(() => {
     const fetchVisitas = async () => {
       try {
@@ -28,12 +37,13 @@ export default function MisVisitas() {
 
         const data = await res.json();
 
+        // Mapear a formato compatible con FullCalendar
         const eventos = data.map((v) => ({
           id: v.id,
           title: `${v.cliente} - ${v.motivo}`,
           start: v.fecha_ida,
           end: v.fecha_regreso,
-          estado: v.estado, // 👈 asegurarse de que la API lo devuelva
+          estado: v.estado,
           cliente: v.cliente,
           motivo: v.motivo,
           ciudad: v.ciudad,
@@ -50,29 +60,26 @@ export default function MisVisitas() {
     fetchVisitas();
   }, []);
 
-  // 🎨 Colores según estado
+  // -----------------------------
+  // Función para asignar colores según estado
+  // -----------------------------
   const estadoColor = (estado) => {
     switch (estado) {
-      case "pendiente":
-        return "bg-yellow-200 text-yellow-800";
-      case "aprobada":
-        return "bg-green-200 text-green-800";
-      case "rechazada":
-        return "bg-red-200 text-red-800";
-      case "realizada":
-        return "bg-blue-200 text-blue-800";
-      default:
-        return "bg-gray-200 text-gray-800";
+      case "pendiente": return "bg-yellow-200 text-yellow-800";
+      case "aprobada": return "bg-green-200 text-green-800";
+      case "rechazada": return "bg-red-200 text-red-800";
+      case "realizada": return "bg-blue-200 text-blue-800";
+      default: return "bg-gray-200 text-gray-800";
     }
   };
 
-  // 🎨 Colores de eventos en el calendario
+  // Colores para FullCalendar
   const eventosConColor = visitas.map((v) => {
     let backgroundColor = "#9ca3af"; // gris por defecto
-    if (v.estado === "pendiente") backgroundColor = "#facc15"; // amarillo
-    if (v.estado === "aprobada") backgroundColor = "#22c55e"; // verde
-    if (v.estado === "rechazada") backgroundColor = "#ef4444"; // rojo
-    if (v.estado === "realizada") backgroundColor = "#3b82f6"; // azul
+    if (v.estado === "pendiente") backgroundColor = "#facc15";
+    if (v.estado === "aprobada") backgroundColor = "#22c55e";
+    if (v.estado === "rechazada") backgroundColor = "#ef4444";
+    if (v.estado === "realizada") backgroundColor = "#3b82f6";
 
     return {
       ...v,
@@ -81,13 +88,16 @@ export default function MisVisitas() {
     };
   });
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div className="flex flex-col w-full h-full p-4">
       <h1 className="text-center text-xl md:text-2xl font-bold text-blue-800 mb-4">
         Mis Visitas
       </h1>
 
-      {/* 🔹 Tabs */}
+      {/* Tabs: Calendario / Estado */}
       <div className="flex justify-center space-x-4 mb-4">
         <button
           onClick={() => setTab("calendario")}
@@ -111,16 +121,11 @@ export default function MisVisitas() {
         </button>
       </div>
 
-      {/* 🔹 Vista según el tab */}
+      {/* Vista según el tab seleccionado */}
       {tab === "calendario" ? (
         <div className="bg-white rounded-2xl shadow-md p-2 md:p-4">
           <FullCalendar
-            plugins={[
-              dayGridPlugin,
-              interactionPlugin,
-              timeGridPlugin,
-              listPlugin,
-            ]}
+            plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin]}
             initialView={isMobile ? "listWeek" : "dayGridMonth"}
             headerToolbar={{
               left: "prev,next today",

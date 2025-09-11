@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, XCircle, Eye, RefreshCw } from "lucide-react";
 
-// Opciones de estado
+// Opciones de filtro de estado para las aprobaciones
 const ESTADOS = [
   { value: "todos", label: "Todos" },
   { value: "pendiente", label: "Pendiente" },
@@ -12,6 +12,7 @@ const ESTADOS = [
   { value: "rechazado", label: "Rechazado" },
 ];
 
+// Función para formatear fechas ISO a string legible
 function fmtDate(iso) {
   try {
     const d = new Date(iso);
@@ -21,6 +22,7 @@ function fmtDate(iso) {
   }
 }
 
+// Componente que muestra un badge con color según el estado
 function EstadoBadge({ estado }) {
   const map = {
     pendiente: "bg-yellow-100 text-yellow-800",
@@ -38,30 +40,34 @@ function EstadoBadge({ estado }) {
   );
 }
 
+// Componente principal para ver y gestionar aprobaciones
 export default function VerAprobaciones() {
   const router = useRouter();
-  const [data, setData] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const [estado, setEstado] = useState("pendiente");
-  const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  // Estado del componente
+  const [data, setData] = useState([]); // Datos de aprobaciones
+  const [total, setTotal] = useState(0); // Total de elementos para paginación
+  const [loading, setLoading] = useState(false); // Estado de carga
+  const [error, setError] = useState(""); // Mensaje de error
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmType, setConfirmType] = useState(null);
-  const [currentRow, setCurrentRow] = useState(null);
-  const [comentario, setComentario] = useState("");
+  const [estado, setEstado] = useState("pendiente"); // Filtro de estado
+  const [q, setQ] = useState(""); // Texto de búsqueda
+  const [page, setPage] = useState(1); // Página actual
+  const [perPage, setPerPage] = useState(10); // Elementos por página
 
-  // Búsqueda con debounce
+  const [confirmOpen, setConfirmOpen] = useState(false); // Modal de confirmación
+  const [confirmType, setConfirmType] = useState(null); // Tipo de acción (aprobar/rechazar)
+  const [currentRow, setCurrentRow] = useState(null); // Fila actual para acción
+  const [comentario, setComentario] = useState(""); // Comentario opcional
+
+  // Búsqueda con debounce para no enviar demasiadas solicitudes
   const [qDebounced, setQDebounced] = useState("");
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim()), 350);
     return () => clearTimeout(t);
   }, [q]);
 
+  // Construye parámetros de consulta para la API
   const qp = useMemo(() => {
     const p = new URLSearchParams();
     if (estado && estado !== "todos") p.set("estado", estado);
@@ -71,6 +77,7 @@ export default function VerAprobaciones() {
     return p.toString();
   }, [estado, qDebounced, page, perPage]);
 
+  // Función para obtener las aprobaciones desde la API
   async function fetchAprobaciones(signal) {
     setLoading(true);
     setError("");
@@ -78,7 +85,6 @@ export default function VerAprobaciones() {
       const res = await fetch(`/api/approvals?${qp}`, { signal });
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const json = await res.json();
-      console.log(json);
       setData(json.rows || []);
       setTotal(json.total || 0);
     } catch (e) {
@@ -88,6 +94,7 @@ export default function VerAprobaciones() {
     }
   }
 
+  // Efecto para cargar datos cada vez que cambian los parámetros de consulta
   useEffect(() => {
     const ctrl = new AbortController();
     fetchAprobaciones(ctrl.signal);
@@ -96,6 +103,7 @@ export default function VerAprobaciones() {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
+  // Abre modal de confirmación
   function openConfirm(type, row) {
     setConfirmType(type);
     setCurrentRow(row);
@@ -103,11 +111,12 @@ export default function VerAprobaciones() {
     setConfirmOpen(true);
   }
 
+  // Ejecuta la acción de aprobar o rechazar
   async function mutateAprobacion(action) {
     if (!currentRow) return;
     const id = currentRow.id;
     const body = { comentario };
-    const prev = [...data];
+    const prev = [...data]; // Guardamos estado previo en caso de error
     setData((rows) =>
       rows.map((r) =>
         r.id === id
@@ -124,22 +133,21 @@ export default function VerAprobaciones() {
       });
       if (!res.ok) throw new Error(`No se pudo ${action}`);
     } catch (e) {
-      setData(prev);
+      setData(prev); // Revertir cambios en caso de error
       setError(e.message || `Error al ${action}`);
     } finally {
       setConfirmOpen(false);
     }
   }
 
+  // Componente de fila de aprobación
   function Row({ row }) {
     const cliente = row?.visita?.cliente || row?.cliente || "-";
     const contacto = row?.visita?.contacto || row?.contacto || "";
     const ciudad = row?.visita?.ciudad || row?.ciudad || "-";
     const pais = row?.visita?.pais || row?.pais || "";
     const fechaIda = fmtDate(row?.visita?.fecha_ida || row?.fecha_ida);
-    const fechaRegreso = fmtDate(
-      row?.visita?.fecha_regreso || row?.fecha_regreso
-    );
+    const fechaRegreso = fmtDate(row?.visita?.fecha_regreso || row?.fecha_regreso);
     const gerente = row?.visita?.gerente?.name || row?.gerente?.name || "-";
     const estado = row?.estado || "pendiente";
 

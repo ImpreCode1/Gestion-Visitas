@@ -2,20 +2,27 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 
+/**
+ * Componente para editar un usuario existente.
+ * - Obtiene los datos del usuario desde la API usando su `id`.
+ * - Permite modificar nombre, email, cargo, teléfono y rol.
+ * - Si el rol es "aprobador", se puede seleccionar un tipo de aprobador.
+ */
 export default function EditarUsuario() {
   const router = useRouter();
-  const { id } = useParams();
+  const { id } = useParams(); // ID del usuario a editar
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     position: "",
     phone: "",
-    role: "sinRol", // 👈 default
+    role: "sinRol", // Valor por defecto
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(true); // Cargando datos del usuario
+  const [error, setError] = useState(""); // Mensajes de error
+  const [success, setSuccess] = useState(""); // Mensajes de éxito
 
+  // Roles disponibles para el select
   const rolesDisponibles = [
     { value: "gerenteProducto", label: "Gerente de Producto, Team Leader o Director" },
     { value: "admin", label: "Administrador" },
@@ -25,6 +32,7 @@ export default function EditarUsuario() {
     { value: "sinRol", label: "Sin Rol" },
   ];
 
+  // 🚀 Obtiene los datos del usuario al cargar el componente
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -36,7 +44,8 @@ export default function EditarUsuario() {
           email: data.email,
           position: data.position || "",
           phone: data.phone || "",
-          role: data.role || "sinRol", // 👈 incluir role
+          role: data.role || "sinRol", // incluir rol
+          tipoaprobador: data.tipoaprobador || "", // tipo de aprobador si aplica
         });
       } catch (err) {
         console.error(err);
@@ -48,11 +57,17 @@ export default function EditarUsuario() {
     fetchUser();
   }, [id]);
 
+  /**
+   * Maneja cambios en los inputs y selects.
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Envía los datos actualizados al servidor.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -76,6 +91,7 @@ export default function EditarUsuario() {
       if (!res.ok) throw new Error("Error al actualizar usuario");
 
       setSuccess("Usuario actualizado correctamente ✅");
+      // Redirige a la lista de usuarios tras 1.5s
       setTimeout(() => router.push("/usuarios"), 1500);
     } catch (err) {
       setError(err.message);
@@ -84,6 +100,7 @@ export default function EditarUsuario() {
     }
   };
 
+  // Mensaje de carga mientras se obtienen los datos
   if (loading) {
     return <p className="p-6 text-center text-gray-500">Cargando usuario...</p>;
   }
@@ -91,15 +108,19 @@ export default function EditarUsuario() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-8">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+        {/* Título */}
         <h1 className="text-2xl font-bold text-blue-800 mb-4">
           Editar Usuario
         </h1>
         <p className="text-gray-600 mb-6">Modifica los datos del usuario.</p>
 
+        {/* Mensajes de error y éxito */}
         {error && <p className="text-red-600 mb-3">{error}</p>}
         {success && <p className="text-green-600 mb-3">{success}</p>}
 
+        {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nombre */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Nombre
@@ -114,6 +135,7 @@ export default function EditarUsuario() {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email
@@ -128,6 +150,7 @@ export default function EditarUsuario() {
             />
           </div>
 
+          {/* Cargo */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Cargo
@@ -141,6 +164,7 @@ export default function EditarUsuario() {
             />
           </div>
 
+          {/* Teléfono */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Teléfono
@@ -155,7 +179,7 @@ export default function EditarUsuario() {
             />
           </div>
 
-          {/* Nuevo select para rol */}
+          {/* Rol */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Rol
@@ -173,6 +197,8 @@ export default function EditarUsuario() {
               ))}
             </select>
           </div>
+
+          {/* Tipo de aprobador solo si rol es "aprobador" */}
           {formData.role === "aprobador" && (
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -180,7 +206,7 @@ export default function EditarUsuario() {
               </label>
               <select
                 name="tipoaprobador"
-                value={formData.tipoaprobador}
+                value={formData.tipoaprobador || ""}
                 onChange={handleChange}
                 className="w-full mt-1 p-2 border rounded-lg focus:ring focus:ring-blue-200"
                 required
@@ -192,6 +218,7 @@ export default function EditarUsuario() {
             </div>
           )}
 
+          {/* Botón de envío */}
           <button
             type="submit"
             disabled={loading}

@@ -3,15 +3,19 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
 
+// Componente layout que envuelve páginas privadas
 export default function PrivadoLayout({ children }) {
+  // Estado que controla si el sidebar está abierto o cerrado
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
-  // Detecta tamaño de pantalla al cargar
+  // -----------------------------
+  // Detectar tamaño de pantalla al cargar
+  // -----------------------------
   useEffect(() => {
-    if (window.innerWidth >= 768) { // md breakpoint de Tailwind
-      setSidebarAbierto(false); // Abierto en PC
+    if (window.innerWidth >= 768) { // md breakpoint de Tailwind (768px)
+      setSidebarAbierto(true);  // Sidebar abierto en pantallas grandes
     } else {
-      setSidebarAbierto(false); // Cerrado en móvil
+      setSidebarAbierto(false); // Sidebar cerrado en móviles
     }
   }, []);
 
@@ -25,7 +29,7 @@ export default function PrivadoLayout({ children }) {
       
       {/* Contenido principal */}
       <main 
-        className={`flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300`}
+        className="flex-1 p-6 bg-gray-100 overflow-auto transition-all duration-300"
       >
         {/* Botón flotante para abrir sidebar en móvil */}
         {!sidebarAbierto && (
@@ -40,7 +44,7 @@ export default function PrivadoLayout({ children }) {
         
         {/* Contenido de la página */}
         <div>
-          {children}
+          {children} {/* Aquí se renderiza el contenido específico de cada página */}
         </div>
       </main>
     </div>

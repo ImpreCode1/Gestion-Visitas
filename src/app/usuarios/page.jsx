@@ -1,16 +1,25 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/**
+ * Página de gestión de usuarios.
+ * - Muestra todos los usuarios en una tabla.
+ * - Permite búsqueda por nombre o email.
+ * - Permite filtrar por rol.
+ * - Permite editar o inactivar usuarios.
+ */
 export default function UsuariosPage() {
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [rolFiltro, setRolFiltro] = useState("todos");
+  // Estados locales
+  const [users, setUsers] = useState([]); // Todos los usuarios
+  const [filteredUsers, setFilteredUsers] = useState([]); // Usuarios filtrados según búsqueda y rol
+  const [loading, setLoading] = useState(true); // Indica si se están cargando los datos
+  const [search, setSearch] = useState(""); // Término de búsqueda
+  const [rolFiltro, setRolFiltro] = useState("todos"); // Filtro por rol
   const router = useRouter();
 
-  // Cargar usuarios desde la API
+  // 🔹 Cargar usuarios desde la API al montar el componente
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -30,7 +39,7 @@ export default function UsuariosPage() {
     fetchUsers();
   }, []);
 
-  // Filtrar usuarios cuando cambia el search
+  // 🔹 Filtrar usuarios cada vez que cambian búsqueda, filtro o la lista de usuarios
   useEffect(() => {
     const term = search.toLowerCase();
 
@@ -57,7 +66,7 @@ export default function UsuariosPage() {
           </h1>
         </div>
 
-        {/* Barra de búsqueda */}
+        {/* Barra de búsqueda y filtro */}
         <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <input
             type="text"
@@ -102,6 +111,7 @@ export default function UsuariosPage() {
               </tr>
             </thead>
             <tbody>
+              {/* Mostrar loading */}
               {loading ? (
                 <tr>
                   <td colSpan="5" className="text-center p-6 text-gray-500">
@@ -131,6 +141,7 @@ export default function UsuariosPage() {
                     </td>
                     <td className="p-3 sm:p-4">{user.phone || "-"}</td>
                     <td className="p-3 sm:p-4 flex flex-col sm:flex-row justify-center gap-2">
+                      {/* Botón para editar usuario */}
                       <button
                         onClick={() =>
                           router.push(`/usuarios/${user.id}/editar_usuario/`)
@@ -139,6 +150,8 @@ export default function UsuariosPage() {
                       >
                         Editar
                       </button>
+
+                      {/* Botón para inactivar usuario */}
                       <button
                         onClick={async () => {
                           if (
@@ -171,6 +184,7 @@ export default function UsuariosPage() {
                   </tr>
                 ))
               ) : (
+                // No hay usuarios que coincidan
                 <tr>
                   <td colSpan="5" className="text-center p-6 text-gray-500">
                     No hay usuarios que coincidan con la búsqueda.

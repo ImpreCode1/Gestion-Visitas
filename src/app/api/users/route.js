@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs"; // 👈 no olvides importar bcrypt
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(); // Inicializamos Prisma
 
-// GET obtener usuarios
+// Endpoint GET para obtener todos los usuarios
 export async function GET() {
+  // Obtenemos todos los usuarios de la base de datos
   const users = await prisma.user.findMany();
+
+  // Retornamos los usuarios en formato JSON
   return NextResponse.json(users);
 }
-

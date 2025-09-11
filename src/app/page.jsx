@@ -1,21 +1,25 @@
+// Importa el componente Image de Next.js para optimización de imágenes
 import Image from "next/image";
+
+// Importa el logo desde la carpeta public
 import logo from "../../public/logo.png";
 
+// Componente principal de la página de inicio
 export default function Homepage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center lg:pt-32 bg-white">
-      {/* Logo */}
+      {/* Logo centrado */}
       <div className="flex justify-center mb-6">
         <Image
-          src={logo}
-          alt="Logo Impresistem"
-          width={140}
-          height={100}
-          className="drop-shadow-sm"
+          src={logo} // Imagen importada
+          alt="Logo Impresistem" // Texto alternativo para accesibilidad
+          width={140} // Ancho de la imagen
+          height={100} // Alto de la imagen
+          className="drop-shadow-sm" // Sombra ligera
         />
       </div>
 
-      {/* Subtítulo */}
+      {/* Subtítulo con línea punteada */}
       <p className="mx-auto -mt-4 max-w-2xl text-lg tracking-tight text-slate-700 sm:mt-6">
         Bienvenido al{" "}
         <span className="border-b border-dotted border-slate-300">
@@ -23,9 +27,11 @@ export default function Homepage() {
         </span>
       </p>
 
-      {/* Título principal */}
+      {/* Título principal con efecto subrayado en azul */}
       <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
         <span className="inline-block">Organiza y aprueba </span>
+
+        {/* Efecto SVG de subrayado azul */}
         <span className="inline-block relative whitespace-nowrap text-blue-600">
           <svg
             aria-hidden="true"
@@ -37,10 +43,11 @@ export default function Homepage() {
           </svg>
           <span className="relative">&nbsp;visitas</span>
         </span>
+
         <span className="inline-block">de manera sencilla</span>
       </h1>
 
-      {/* Descripción */}
+      {/* Descripción secundaria */}
       <p className="mx-auto mt-9 max-w-2xl text-lg tracking-tight text-slate-700 sm:mt-6">
         <span className="inline-block">
           Centraliza la gestión de aprobaciones y seguimiento
@@ -50,11 +57,11 @@ export default function Homepage() {
         </span>
       </p>
 
-      {/* Botones */}
+      {/* Botones de acción */}
       <div className="mt-12 flex flex-col justify-center gap-y-5 sm:mt-10 sm:flex-row sm:gap-y-0 sm:gap-x-6">
-        {/* Botón oscuro */}
+        {/* Botón para iniciar sesión */}
         <a
-          href="/login"
+          href="/login" // Redirige a la página de login
           className="group inline-flex items-center justify-center rounded-full py-2 px-4 text-sm font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 bg-slate-900 text-white hover:bg-slate-700 hover:text-slate-100 active:bg-slate-800 active:text-slate-300 focus-visible:outline-slate-900"
         >
           <span className="ml-1">Iniciar Sesión</span>

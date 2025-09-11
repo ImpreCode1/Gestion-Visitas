@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import ldap from "ldapjs";
-import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client"
+import ldap from "ldapjs"; // Librería para conectarse a LDAP (Active Directory)
+import jwt from "jsonwebtoken"; // Para generar tokens JWT
+import { PrismaClient } from "@prisma/client" // ORM para la base de datos
 
+// Función para determinar el rol del usuario a partir de su título en AD
 function determinarRol(title = "") {
     const t = title.toLowerCase();
     if (
@@ -33,25 +34,33 @@ function determinarRol(title = "") {
     }
 }
 
+const prisma = new PrismaClient(); // Inicializamos cliente de Prisma
 
-const prisma = new PrismaClient();
-
+// Secretos para JWT obtenidos de variables de entorno
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
+// Endpoint POST para login/autenticación vía LDAP
 export async function POST(request) {
     const { email, password } = await request.json();
 
+    // Validación básica de email y contraseña
     if (!email || !password) {
-        return NextResponse.json({ error: "Email y contraseña son requeridos" }, { status: 400 });
+        return NextResponse.json(
+            { error: "Email y contraseña son requeridos" },
+            { status: 400 }
+        );
     }
 
+    // Construcción de credenciales de AD
     const username = email.split("@")[0];
     const userUPN = `${username}@impresistem.local`;
     const userNetBIOS = `IMPRESISTEM\\${username}`;
 
+    // Cliente LDAP
     const client = ldap.createClient({ url: "ldap://impresistem.local" });
 
+    // Función auxiliar para intentar bind (autenticación) en LDAP
     const tryBind = (user) =>
         new Promise((resolve, reject) => {
             client.bind(user, password, (err) => {
@@ -62,16 +71,22 @@ export async function POST(request) {
 
     let authenticatedAs;
     try {
+        // Intentamos autenticar usando UPN
         authenticatedAs = await tryBind(userUPN);
     } catch {
         try {
+            // Si falla, intentamos usando NetBIOS
             authenticatedAs = await tryBind(userNetBIOS);
         } catch (err) {
             console.error("❌ Error autenticando:", err);
-            return NextResponse.json({ error: "Usuario o contraseña inválidos" }, { status: 401 });
+            return NextResponse.json(
+                { error: "Usuario o contraseña inválidos" },
+                { status: 401 }
+            );
         }
     }
 
+    // Obtenemos información adicional del usuario desde LDAP
     const userInfo = await new Promise((resolve, reject) => {
         const opts = {
             filter: `(sAMAccountName=${username})`,
@@ -95,7 +110,9 @@ export async function POST(request) {
         });
     });
 
-    client.unbind();
+    client.unbind(); // Cerramos la conexión LDAP
+
+    // Verificamos si el usuario ya existe en la base de datos
     const usuarioExistente = await prisma.user.findUnique({
         where: { email },
     });
@@ -108,15 +125,16 @@ export async function POST(request) {
     } else {
         // 🆕 Si no existe, lo calculamos desde AD
         role = determinarRol(userInfo.title || "");
-        if (role == "approbador"){
-            if (title.includes("internal procurement")){
-                tipoaprobador = "nacional"
-            } else if (title.includes("supply")){
-                tipoaprobador = "local"
+        if (role === "aprobador") {
+            if ((userInfo.title || "").includes("internal procurement")) {
+                tipoaprobador = "nacional";
+            } else if ((userInfo.title || "").includes("supply")) {
+                tipoaprobador = "local";
             }
         }
     }
 
+    // Creamos o actualizamos el usuario en la base de datos
     const usuario = await prisma.user.upsert({
         where: { email },
         update: {
@@ -138,6 +156,7 @@ export async function POST(request) {
         },
     });
 
+    // Generamos tokens JWT
     const accesstoken = jwt.sign(
         {
             email,
@@ -162,29 +181,33 @@ export async function POST(request) {
         { expiresIn: "7d" }
     );
 
+    // Preparamos la respuesta HTTP
     const response = NextResponse.json({}, { status: 200 });
 
+    // Guardamos el token de acceso en cookie HTTPOnly
     response.cookies.set({
         name: "token",
         value: accesstoken,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 15,
+        maxAge: 60 * 15, // 15 minutos
         path: "/",
     });
 
+    // Guardamos el refresh token en cookie HTTPOnly
     response.cookies.set({
         name: "refreshToken",
         value: refreshtoken,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * 7,
+        maxAge: 60 * 60 * 24 * 7, // 7 días
         path: "/",
     });
 
     return response;
 }
 
+// Función auxiliar para transformar atributos LDAP a objeto plano
 function parseLdapAttributes(attributesArray) {
     const result = {};
     for (const attr of attributesArray) {

@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
 
 export default function PrivadoLayout({ children }) {
-  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false); 
+  // Estado que controla si el sidebar está abierto o cerrado
 
-  // Detecta tamaño de pantalla al cargar
+  // Detecta el tamaño de pantalla al cargar y ajusta el sidebar
   useEffect(() => {
     if (window.innerWidth >= 768) { // md breakpoint de Tailwind
-      setSidebarAbierto(true); // Abierto en PC
+      setSidebarAbierto(true); // En pantallas grandes, el sidebar está abierto por defecto
     } else {
-      setSidebarAbierto(false); // Cerrado en móvil
+      setSidebarAbierto(false); // En móviles, el sidebar está cerrado por defecto
     }
   }, []);
 
@@ -38,7 +39,7 @@ export default function PrivadoLayout({ children }) {
           </button>
         )}
         
-        {/* Contenido de la página */}
+        {/* Renderiza el contenido de la página */}
         <div>
           {children}
         </div>
