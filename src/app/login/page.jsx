@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Para redirecciones en el cliente
 import Swal from "sweetalert2"; // Librería para mostrar alertas bonitas
+import { Eye, EyeOff } from "lucide-react"; 
 
 // Componente principal de la página de login
 export default function LoginPage() {
   const router = useRouter(); // Hook para navegar programáticamente
   const [loading, setLoading] = useState(false); // Estado para mostrar spinner/bloquear botón
-
+  const [showPassword, setShowPassword] = useState(false);
+  
   // -----------------------------
   // Función que se ejecuta al enviar el formulario
   // -----------------------------
   const handleSubmit = async (event) => {
     event.preventDefault(); // Evita que el formulario haga reload
-    setLoading(true);       // Activamos estado de carga
+    setLoading(true); // Activamos estado de carga
 
     // Obtenemos valores de los inputs
     const rawUsername = event.target.email.value.trim();
@@ -56,13 +58,13 @@ export default function LoginPage() {
           router.push("/agendar_visita"); // Acceso a agendar visita
           break;
         case "admin":
-          router.push("/usuarios");       // Acceso a gestión de usuarios
+          router.push("/usuarios"); // Acceso a gestión de usuarios
           break;
         case "aprobador":
-          router.push("/aprobaciones");  // Acceso a aprobaciones
+          router.push("/aprobaciones"); // Acceso a aprobaciones
           break;
         default:
-          router.push("/sin_acceso");    // Usuario sin acceso definido
+          router.push("/sin_acceso"); // Usuario sin acceso definido
           break;
       }
     } catch (error) {
@@ -122,21 +124,30 @@ export default function LoginPage() {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="Contraseña"
                   className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 
-                             focus:outline-none focus:border-cyan-500"
+                   focus:outline-none focus:border-cyan-500 pr-10"
                 />
                 <label
                   htmlFor="password"
                   className="absolute left-0 -top-3.5 text-gray-600 text-sm 
-                             peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 
-                             peer-placeholder-shown:top-2 transition-all 
-                             peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
+                   peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 
+                   peer-placeholder-shown:top-2 transition-all 
+                   peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
                 >
                   Contraseña
                 </label>
+
+                {/* Botón para mostrar/ocultar */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
 
               {/* Botón de envío */}
