@@ -28,11 +28,9 @@ export async function GET(req) {
     if (usuario.role === "vicepresidente") {
       rolFiltrado = "vicepresidencia";
     } else if (usuario.role === "aprobador") {
-      if (usuario.tipoaprobador === "local") {
+      if (usuario.tipoaprobador === "suministros") {
         rolFiltrado = "transporte";
-      } else if (usuario.tipoaprobador === "nacional") {
-        rolFiltrado = "tiquetes";
-      } else if (usuario.tipoaprobador === "internacional") {
+      } else if (usuario.tipoaprobador === "adquisiciones") {
         rolFiltrado = "tiquetes";
       }
     }

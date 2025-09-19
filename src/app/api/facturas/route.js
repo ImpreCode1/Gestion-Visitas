@@ -1,56 +1,88 @@
 import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
+import fs from "fs";
 import path from "path";
-import { PrismaClient } from "@prisma/client" // ORM para la base de datos
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient(); // Inicializamos cliente de Prisma
+const prisma = new PrismaClient();
 
+// 🔹 POST /api/facturas
+// Crea o actualiza facturas de una visita, subiendo varios archivos
 export async function POST(req) {
   try {
-    // 1. Recibir form-data
     const formData = await req.formData();
-    const file = formData.get("file");
+    const files = formData.getAll("files");
     const descripcion = formData.get("descripcion");
     const monto = formData.get("monto");
-    const fechaEmision = formData.get("fechaEmision"); // opcional
     const visitaId = parseInt(formData.get("visitaId"));
 
-    if (!file || !visitaId) {
+    if (!visitaId || !files.length) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios (archivo o visitaId)" },
+        { error: "Faltan datos obligatorios (visitaId o archivos)" },
         { status: 400 }
       );
     }
 
-    // 2. Guardar archivo en /public/uploads
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const fileName = `${Date.now()}-${file.name}`;
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    const filePath = path.join(uploadDir, fileName);
-
-    await writeFile(filePath, buffer);
-
-    const fileUrl = `/uploads/${fileName}`; // accesible desde el front
-
-    // 3. Registrar en la BD con Prisma
-    const documento = await prisma.documento.create({
-      data: {
-        visitaId,
-        tipo: "factura", // ⚡ debe coincidir con tu enum TipoDocumento en Prisma
-        url: fileUrl,
-        descripcion: descripcion || null,
-        monto: monto ? parseFloat(monto) : null,
-        fechaEmision: fechaEmision ? new Date(fechaEmision) : null,
-      },
+    // 1. Verificar si ya existe Factura para esta visita
+    let factura = await prisma.factura.findUnique({
+      where: { visitaId },
     });
 
-    return NextResponse.json({ success: true, documento });
+    if (!factura) {
+      // Si no existe, crear nueva factura asociada a la visita
+      factura = await prisma.factura.create({
+        data: {
+          visitaId,
+          descripcion: descripcion || null,
+          montoTotal: monto ? parseFloat(monto) : null,
+        },
+      });
+    } else {
+      // Si ya existe, actualizar campos
+      factura = await prisma.factura.update({
+        where: { visitaId },
+        data: {
+          descripcion: descripcion ?? factura.descripcion,
+          montoTotal: monto ? parseFloat(monto) : factura.montoTotal,
+        },
+      });
+    }
+
+    const archivosGuardados = [];
+
+    // 2. Guardar archivos en /public/uploads
+    for (const file of files) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+      const filePath = path.join(uploadDir, fileName);
+
+      await writeFile(filePath, buffer);
+
+      const fileUrl = `/uploads/${fileName}`;
+
+      const archivo = await prisma.archivoFactura.create({
+        data: {
+          facturaId: factura.id,
+          nombre: file.name, // guardar nombre original
+          url: fileUrl,
+        },
+      });
+
+      archivosGuardados.push(archivo);
+    }
+
+    return NextResponse.json({
+      success: true,
+      factura,
+      archivos: archivosGuardados,
+    });
   } catch (error) {
-    console.error("Error al subir factura:", error);
+    console.error("Error al subir facturas:", error);
     return NextResponse.json(
-      { error: "Error al subir la factura" },
+      { error: "Error al subir facturas" },
       { status: 500 }
     );
   }
@@ -69,18 +101,16 @@ export async function GET(req) {
       );
     }
 
-    // Buscar facturas asociadas a la visita
-    const facturas = await prisma.documento.findMany({
-      where: {
-        visitaId,
-        tipo: "factura", // ⚡ solo facturas
-      },
-      orderBy: {
-        createdAt: "desc", // las más recientes primero
-      },
+    const factura = await prisma.factura.findUnique({
+      where: { visitaId },
+      include: { archivos: true },
     });
 
-    return NextResponse.json({ success: true, facturas });
+    if (!factura) {
+      return NextResponse.json({ success: true, factura: null });
+    }
+
+    return NextResponse.json({ success: true, factura });
   } catch (error) {
     console.error("Error al obtener facturas:", error);
     return NextResponse.json(
@@ -90,62 +120,77 @@ export async function GET(req) {
   }
 }
 
-export async function DELETE(req, { params }) {
+// 🔹 DELETE /api/facturas?idArchivo=123
+export async function DELETE(req) {
   try {
-    const { id } = params;
+    const { searchParams } = new URL(req.url);
+    const idArchivo = parseInt(searchParams.get("idArchivo"));
 
-    // Buscar factura en BD
-    const factura = await prisma.documento.findUnique({
-      where: { id: parseInt(id) },
+    if (!idArchivo) {
+      return NextResponse.json(
+        { error: "Debe enviar un idArchivo válido" },
+        { status: 400 }
+      );
+    }
+
+    const archivo = await prisma.archivoFactura.findUnique({
+      where: { id: idArchivo },
     });
 
-    if (!factura) {
+    if (!archivo) {
       return NextResponse.json(
-        { error: "Factura no encontrada" },
+        { error: "Archivo no encontrado" },
         { status: 404 }
       );
     }
 
-    // Eliminar archivo físico
-    const filePath = path.join(process.cwd(), "public", factura.url);
+    // Borrar archivo físico
+    const filePath = path.join(process.cwd(), "public", archivo.url);
     try {
-      await fs.unlink(filePath);
+      await fs.promises.unlink(filePath);
     } catch (err) {
-      console.warn("⚠️ No se pudo borrar el archivo físico:", err.message);
+      console.warn("⚠️ No se pudo borrar archivo físico:", err.message);
     }
 
-    // Eliminar registro de BD
-    await prisma.documento.delete({
-      where: { id: parseInt(id) },
-    });
+    // Borrar de BD
+    await prisma.archivoFactura.delete({ where: { id: archivo.id } });
 
-    return NextResponse.json({ success: true, message: "Factura eliminada" });
+    return NextResponse.json({ success: true, message: "Archivo eliminado" });
   } catch (error) {
-    console.error("Error al eliminar factura:", error);
+    console.error("Error al eliminar archivo:", error);
     return NextResponse.json(
-      { error: "Error al eliminar factura" },
+      { error: "Error al eliminar archivo" },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(req, { params }) {
+// 🔹 PUT /api/facturas?visitaId=123
+// Actualiza descripción, monto o fecha de emisión
+export async function PUT(req) {
   try {
-    const { id } = params;
+    const { searchParams } = new URL(req.url);
+    const visitaId = parseInt(searchParams.get("visitaId"));
     const body = await req.json();
 
-    const { descripcion, monto, fechaEmision } = body;
+    if (!visitaId) {
+      return NextResponse.json(
+        { error: "Debe enviar un visitaId válido" },
+        { status: 400 }
+      );
+    }
 
-    const updatedFactura = await prisma.documento.update({
-      where: { id: parseInt(id) },
+    const { descripcion, monto } = body;
+
+    const factura = await prisma.factura.update({
+      where: { visitaId },
       data: {
         descripcion: descripcion ?? undefined,
-        monto: monto ? parseFloat(monto) : undefined,
-        fechaEmision: fechaEmision ? new Date(fechaEmision) : undefined,
+        montoTotal: monto ? parseFloat(monto) : undefined
       },
     });
 
-    return NextResponse.json({ success: true, factura: updatedFactura });
+    return NextResponse.json({ success: true, factura });
   } catch (error) {
     console.error("Error al actualizar factura:", error);
     return NextResponse.json(

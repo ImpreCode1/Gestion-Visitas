@@ -173,7 +173,7 @@ export default function AgendarVisitaPage() {
                   htmlFor="fecha_ida"
                   className="block text-xs sm:text-sm font-semibold text-gray-500 mb-2"
                 >
-                  Fecha de ida
+                  Fecha y hora de ida
                 </label>
                 <input
                   type="datetime-local"
@@ -190,7 +190,7 @@ export default function AgendarVisitaPage() {
                   htmlFor="fecha_regreso"
                   className="block text-xs sm:text-sm font-semibold text-gray-500 mb-2"
                 >
-                  Fecha de regreso
+                  Fecha y hora de regreso
                 </label>
                 <input
                   type="datetime-local"

@@ -31,7 +31,7 @@ model Visita {
   gerenteId   Int
   gerente     User  @relation("VisitasGerente", fields: [gerenteId], references: [id])
 
-  // Datos del cliente (se ingresan manualmente)
+  // Datos del cliente
   clienteCodigo String
   cliente       String
 
@@ -46,27 +46,34 @@ model Visita {
   fecha_ida     DateTime
   fecha_regreso DateTime
   lugar         String?
-  requiereAvion Boolean @default(false) // 👈 Nuevo campo para ramificar el flujo
+  requiereAvion Boolean @default(false)
   estado        EstadoVisita @default(pendiente)
 
   // Relaciones
-  documentos   Documento[]
+  facturas     Factura?
   aprobaciones Aprobacion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Documento {
-  id           Int           @id @default(autoincrement())
-  visitaId     Int
-  visita       Visita        @relation(fields: [visitaId], references: [id])
-  tipo         TipoDocumento
-  url          String
-  descripcion  String?
-  monto        Float?
-  fechaEmision DateTime?
-  createdAt    DateTime      @default(now())
+model Factura {
+  id         Int              @id @default(autoincrement())
+  visitaId   Int              @unique // 👈 asegura que solo exista un registro por visita
+  visita     Visita           @relation(fields: [visitaId], references: [id])
+  archivos   ArchivoFactura[] // 👈 varios archivos dentro del mismo grupo
+  descripcion String?
+  montoTotal  Float?
+  createdAt   DateTime @default(now())
+}
+
+model ArchivoFactura {
+  id        Int      @id @default(autoincrement())
+  facturaId Int
+  factura   Factura  @relation(fields: [facturaId], references: [id])
+  nombre    String   // nombre original del archivo
+  url       String   // ruta donde quedó guardado (S3, disco, etc.)
+  createdAt DateTime @default(now())
 }
 
 model Aprobacion {
@@ -96,18 +103,10 @@ enum EstadoAprobacion {
   rechazado
 }
 
-enum TipoDocumento {
-  factura
-  comprobante
-  foto
-  otro
-}
-
 enum TipoAprobador {
   null
-  local
-  nacional
-  internacional
+  suministros
+  adquisiciones
 }
 
 enum RolAprobacion {

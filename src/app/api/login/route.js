@@ -64,16 +64,16 @@ export async function POST(request) {
       displayName: "Usuario Prueba",
       mail: email,
       department: "IT",
-      title: "internal supply",
+      title: "trainee",
       mobile: "3001234567",
     };
 
     role = determinarRol(userInfo.title);
     if (role === "aprobador") {
       if ((userInfo.title || "").includes("internal procurement")) {
-        tipoaprobador = "nacional";
+        tipoaprobador = "adquisiciones";
       } else if ((userInfo.title || "").includes("internal supply")) {
-        tipoaprobador = "local";
+        tipoaprobador = "suministros";
       }
     }
   } else {
@@ -130,9 +130,9 @@ export async function POST(request) {
     role = determinarRol(userInfo.title || "");
     if (role === "aprobador") {
       if ((userInfo.title || "").includes("internal procurement")) {
-        tipoaprobador = "nacional";
+        tipoaprobador = "adquisiciones";
       } else if ((userInfo.title || "").includes("internal supply")) {
-        tipoaprobador = "local";
+        tipoaprobador = "suministros";
       }
     }
   }
