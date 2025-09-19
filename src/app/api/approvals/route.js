@@ -1,46 +1,73 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, EstadoVisita } from "@prisma/client";
+import { jwtVerify } from "jose";
 
-const prisma = new PrismaClient(); 
-// Inicializamos el cliente de Prisma para interactuar con la base de datos
+const prisma = new PrismaClient();
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-// Handler para la ruta GET /api/aprobaciones
 export async function GET(req) {
   try {
-    // Obtenemos los parámetros de búsqueda desde la URL
-    const { searchParams } = new URL(req.url);
-
-    // Parámetros opcionales que pueden venir en la query string
-    const estado = searchParams.get("estado");      // Filtrar por estado de la aprobación
-    const q = searchParams.get("q") || "";          // Búsqueda por cliente, ciudad o gerente
-    const page = parseInt(searchParams.get("page") || "1");        // Paginación: número de página
-    const perPage = parseInt(searchParams.get("perPage") || "10"); // Paginación: registros por página
-
-    // Cálculo para saltar registros (paginación)
-    const skip = (page - 1) * perPage;
-
-    // Objeto base de filtros
-    const where = {};
-
-    // Si se especifica un estado distinto de "todos", se agrega al filtro
-    if (estado && estado !== "todos") {
-      where.estado = estado;
+    const token = req.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // Si se recibe un texto de búsqueda (q), se arma un filtro OR en varios campos
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+
+    const usuario = await prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!usuario) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    let rolFiltrado = null;
+    if (usuario.role === "vicepresidente") {
+      rolFiltrado = "vicepresidencia";
+    } else if (usuario.role === "aprobador") {
+      if (usuario.tipoaprobador === "local") {
+        rolFiltrado = "transporte";
+      } else if (usuario.tipoaprobador === "nacional") {
+        rolFiltrado = "tiquetes";
+      } else if (usuario.tipoaprobador === "internacional") {
+        rolFiltrado = "tiquetes";
+      }
+    }
+
+    if (!rolFiltrado) {
+      return NextResponse.json(
+        { error: "Este usuario no tiene permisos para ver aprobaciones" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const estado = searchParams.get("estado");
+    const q = searchParams.get("q") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const perPage = parseInt(searchParams.get("perPage") || "10");
+    const skip = (page - 1) * perPage;
+
+    const where = { rol: rolFiltrado };
+    if (estado && estado !== "todos") {
+      if (Object.values(EstadoVisita).includes(estado)) {
+        where.estado = estado; // ✅ Enum validado
+      }
+    }
     if (q.length > 0) {
       where.OR = [
-        { visita: { is: { cliente: { contains: q } } } },          // Buscar por cliente
-        { visita: { is: { ciudad: { contains: q } } } },           // Buscar por ciudad
-        { visita: { is: { gerente: { name: { contains: q } } } } } // Buscar por nombre del gerente
+        { visita: { cliente: { contains: q } } },
+        { visita: { ciudad: { contains: q } } },
+        { visita: { gerente: { name: { contains: q } } } },
       ];
     }
 
-    // Contamos el total de registros que cumplen con los filtros (para la paginación)
     const total = await prisma.aprobacion.count({ where });
 
-    // Obtenemos los registros con paginación, ordenados por fecha de creación descendente
-    const rows = await prisma.aprobacion.findMany({
+    let rows = await prisma.aprobacion.findMany({
       where,
       skip,
       take: perPage,
@@ -48,14 +75,50 @@ export async function GET(req) {
       include: {
         visita: {
           include: {
-            gerente: true, // Incluimos datos del gerente relacionado
+            gerente: true,
+            aprobaciones: true,
           },
         },
-        aprobador: true, // Incluimos datos del aprobador
       },
     });
 
-    // Respuesta JSON con los datos y metainformación de paginación
+    rows = await Promise.all(
+      rows.map(async (aprobacion) => {
+        const aprobacionesVisita = aprobacion.visita.aprobaciones;
+
+        const aprobVP = aprobacionesVisita.find(
+          (a) => a.rol === "vicepresidencia"
+        );
+        const aprobTiq = aprobacionesVisita.find((a) => a.rol === "tiquetes");
+        const aprobTrans = aprobacionesVisita.find(
+          (a) => a.rol === "transporte"
+        );
+
+        if (aprobVP && (aprobTiq || aprobTrans)) {
+          if (aprobVP.estado === "pendiente") {
+            if (
+              aprobacion.rol === "tiquetes" ||
+              aprobacion.rol === "transporte"
+            ) {
+              return null;
+            }
+          }
+
+          if (aprobVP.estado === "rechazado") {
+            if (
+              aprobacion.rol === "tiquetes" ||
+              aprobacion.rol === "transporte"
+            ) {
+              aprobacion.estado = "rechazado";
+            }
+          }
+        }
+        return aprobacion;
+      })
+    );
+
+    rows = rows.filter((r) => r !== null);
+
     return NextResponse.json({
       rows,
       total,
@@ -63,7 +126,6 @@ export async function GET(req) {
       perPage,
     });
   } catch (err) {
-    // Si ocurre un error, lo mostramos en consola y devolvemos un 500
     console.error("❌ Error en GET /api/aprobaciones:", err);
     return NextResponse.json(
       { error: "Error al obtener aprobaciones" },

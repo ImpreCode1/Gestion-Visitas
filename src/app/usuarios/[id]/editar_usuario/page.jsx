@@ -212,8 +212,8 @@ export default function EditarUsuario() {
                 required
               >
                 <option value="">Selecciona una opción</option>
-                <option value="local">Local (Bogotá)</option>
-                <option value="nacional">Nacional (Fuera de Bogotá)</option>
+                <option value="local">Internal Supply</option>
+                <option value="nacional">Internal Procurement</option>
               </select>
             </div>
           )}

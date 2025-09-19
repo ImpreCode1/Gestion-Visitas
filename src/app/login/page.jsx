@@ -63,6 +63,9 @@ export default function LoginPage() {
         case "aprobador":
           router.push("/aprobaciones"); // Acceso a aprobaciones
           break;
+        case "vicepresidente":
+          router.push("/aprobaciones");
+          break;
         default:
           router.push("/sin_acceso"); // Usuario sin acceso definido
           break;

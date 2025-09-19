@@ -22,17 +22,14 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // Relaciones
   visitasRegistradas Visita[]     @relation("VisitasGerente")
-  visitasAprobadas   Visita[]     @relation("VisitasAprobador")
-  aprobaciones       Aprobacion[]
 }
 
 model Visita {
   id          Int   @id @default(autoincrement())
   gerenteId   Int
   gerente     User  @relation("VisitasGerente", fields: [gerenteId], references: [id])
-  aprobadorId Int?
-  aprobador   User? @relation("VisitasAprobador", fields: [aprobadorId], references: [id])
 
   // Datos del cliente (se ingresan manualmente)
   clienteCodigo String
@@ -49,8 +46,10 @@ model Visita {
   fecha_ida     DateTime
   fecha_regreso DateTime
   lugar         String?
+  requiereAvion Boolean @default(false) // 👈 Nuevo campo para ramificar el flujo
   estado        EstadoVisita @default(pendiente)
 
+  // Relaciones
   documentos   Documento[]
   aprobaciones Aprobacion[]
 
@@ -59,20 +58,23 @@ model Visita {
 }
 
 model Documento {
-  id        Int           @id @default(autoincrement())
-  visitaId  Int
-  visita    Visita        @relation(fields: [visitaId], references: [id])
-  tipo      TipoDocumento
-  url       String
-  createdAt DateTime      @default(now())
+  id           Int           @id @default(autoincrement())
+  visitaId     Int
+  visita       Visita        @relation(fields: [visitaId], references: [id])
+  tipo         TipoDocumento
+  url          String
+  descripcion  String?
+  monto        Float?
+  fechaEmision DateTime?
+  createdAt    DateTime      @default(now())
 }
 
 model Aprobacion {
   id          Int              @id @default(autoincrement())
   visitaId    Int
   visita      Visita           @relation(fields: [visitaId], references: [id])
-  aprobadorId Int
-  aprobador   User             @relation(fields: [aprobadorId], references: [id])
+
+  rol         RolAprobacion
   estado      EstadoAprobacion @default(pendiente)
   comentario  String?
   fecha       DateTime         @default(now())
@@ -106,4 +108,10 @@ enum TipoAprobador {
   local
   nacional
   internacional
+}
+
+enum RolAprobacion {
+  vicepresidencia
+  tiquetes
+  transporte
 }

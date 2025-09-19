@@ -75,20 +75,6 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // 🔹 Clasificar tipo de visita
-    let tipoVisita;
-    if (body.pais !== "Colombia") tipoVisita = "internacional";
-    else if (body.ciudad === "Bogotá") tipoVisita = "local";
-    else tipoVisita = "nacional";
-
-    // 🔹 Buscar aprobador solo si no es internacional
-    let aprobador = null;
-    if (tipoVisita !== "internacional") {
-      aprobador = await prisma.user.findFirst({
-        where: { role: "aprobador", tipoaprobador: tipoVisita },
-      });
-    }
-
     // 🔹 Crear la visita
     const nuevaVisita = await prisma.visita.create({
       data: {
@@ -105,21 +91,27 @@ export async function POST(request) {
         fecha_ida: new Date(body.fecha_ida),
         fecha_regreso: new Date(body.fecha_regreso),
         lugar: body.lugar || "",
+        requiereAvion: body.requiereAvion,
         estado: "pendiente",
-        aprobador: aprobador ? { connect: { id: aprobador.id } } : undefined,
       },
     });
 
-    // 🔹 Crear registro de aprobación si hay aprobador
-    if (aprobador) {
-      await prisma.aprobacion.create({
-        data: {
-          visitaId: nuevaVisita.id,
-          aprobadorId: aprobador.id,
-          estado: "pendiente",
-        },
-      });
+    let aprobaciones = [];
+    if (body.requiereAvion == true){
+      aprobaciones = [
+        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente" },
+        { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
+        { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
+      ];
+    }else{
+      aprobaciones = [
+        { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
+      ];
     }
+
+    await prisma.aprobacion.createMany({
+      data: aprobaciones,
+    });
 
     return NextResponse.json(nuevaVisita, { status: 201 });
   } catch (error) {
