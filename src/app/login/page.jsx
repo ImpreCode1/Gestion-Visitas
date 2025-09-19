@@ -58,7 +58,7 @@ export default function LoginPage() {
           router.push("/agendar_visita"); // Acceso a agendar visita
           break;
         case "admin":
-          router.push("/usuarios"); // Acceso a gestión de usuarios
+          router.push("admin/usuarios"); // Acceso a gestión de usuarios
           break;
         case "aprobador":
           router.push("/aprobaciones"); // Acceso a aprobaciones

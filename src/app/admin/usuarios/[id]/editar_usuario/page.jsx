@@ -92,7 +92,7 @@ export default function EditarUsuario() {
 
       setSuccess("Usuario actualizado correctamente ✅");
       // Redirige a la lista de usuarios tras 1.5s
-      setTimeout(() => router.push("/usuarios"), 1500);
+      setTimeout(() => router.push("admin/usuarios"), 1500);
     } catch (err) {
       setError(err.message);
     } finally {

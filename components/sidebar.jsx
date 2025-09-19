@@ -11,6 +11,7 @@ import {
   FaMoneyBill,
   FaUserShield,
   FaCheckCircle,
+  FaAutoprefixer
 } from "react-icons/fa";
 import logo from "../public/logo.png";
 import BotonRojo from "./boton_rojo";
@@ -36,7 +37,8 @@ const menusPorRol = {
     {
       titulo: "Administración",
       items: [
-        { label: "Panel de administración", href: "/admin", icon: <FaUserShield /> },
+        { label: "Usuarios", href: "/admin/usuarios", icon: <FaUserShield /> },
+        { label: "Visitas", href: "/admin/visitas", icon: <FaAutoprefixer /> },
       ],
     },
     {
@@ -106,7 +108,8 @@ const menusPorRol = {
     {
       titulo: "Administración",
       items: [
-        { label: "Panel de administración", href: "/usuarios", icon: <FaUserShield /> },
+        { label: "Usuarios", href: "/admin/usuarios", icon: <FaUserShield /> },
+        { label: "Visitas", href: "/admin/visitas", icon: <FaAutoprefixer /> },
       ],
     },
     {
