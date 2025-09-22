@@ -1,26 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  FileText,
-  XCircle,
-  CheckCircle2,
-  Clock,
-  Plane,
-  User,
-} from "lucide-react";
+import { FileText, XCircle, CheckCircle2, Plane, User, X } from "lucide-react";
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+
+  // estados para modales
+  const [selectedVisita, setSelectedVisita] = useState(null);
+  const [showDetalles, setShowDetalles] = useState(false);
+  const [showFacturas, setShowFacturas] = useState(false);
 
   // 🔹 Cargar visitas al montar
   useEffect(() => {
     const fetchVisitas = async () => {
       try {
-        const res = await fetch("/api/visites/admin"); // 👈 endpoint especial para admin
+        const res = await fetch("/api/visites/admin");
         if (!res.ok) throw new Error("Error al obtener visitas");
         const data = await res.json();
         setVisitas(data.visitas || []);
@@ -95,7 +91,9 @@ export default function VisitasPage() {
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-blue-600" />
                         <div>
-                          <div className="font-medium">{visita.gerente.name}</div>
+                          <div className="font-medium">
+                            {visita.gerente.name}
+                          </div>
                           <div className="text-xs text-gray-500">
                             {visita.gerente.email}
                           </div>
@@ -181,18 +179,20 @@ export default function VisitasPage() {
                     {/* Acciones */}
                     <td className="p-3 flex flex-col gap-2 text-center">
                       <button
-                        onClick={() =>
-                          router.push(`/admin/visitas/${visita.id}`)
-                        }
+                        onClick={() => {
+                          setSelectedVisita(visita);
+                          setShowDetalles(true);
+                        }}
                         className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
                       >
                         Ver detalles
                       </button>
                       {visita.facturas && (
                         <button
-                          onClick={() =>
-                            router.push(`/admin/visitas/${visita.id}/facturas`)
-                          }
+                          onClick={() => {
+                            setSelectedVisita(visita);
+                            setShowFacturas(true);
+                          }}
                           className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition flex items-center gap-1 justify-center"
                         >
                           <FileText className="w-4 h-4" /> Ver facturas
@@ -212,6 +212,90 @@ export default function VisitasPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal Detalles */}
+      {showDetalles && selectedVisita && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative border border-gray-200">
+            <button
+              onClick={() => setShowDetalles(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-blue-700">
+              Detalles de la Visita {selectedVisita.id}
+            </h2>
+            <p>
+              <b>Cliente:</b> {selectedVisita.cliente} (
+              {selectedVisita.clienteCodigo})
+            </p>
+            <p>
+              <b>Motivo:</b> {selectedVisita.motivo}
+            </p>
+            <p>
+              <b>Lugar:</b> {selectedVisita.lugar}
+            </p>
+            <p>
+              <b>Fechas:</b>{" "}
+              {new Date(selectedVisita.fecha_ida).toLocaleDateString()} -{" "}
+              {new Date(selectedVisita.fecha_regreso).toLocaleDateString()}
+            </p>
+            <p>
+              <b>Estado:</b> {selectedVisita.estado}
+            </p>
+            <div className="mt-4">
+              <h3 className="font-semibold">Aprobaciones:</h3>
+              {selectedVisita.aprobaciones.map((ap) => (
+                <div key={ap.id}>
+                  {ap.rol}: <span className="font-medium">{ap.estado}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Facturas */}
+      {showFacturas && selectedVisita && selectedVisita.facturas && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative border border-gray-200">
+            <button
+              onClick={() => setShowFacturas(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-green-700">
+              Facturas de la Visita {selectedVisita.id}
+            </h2>
+            <p>
+              <b>Descripción:</b> {selectedVisita.facturas.descripcion}
+            </p>
+            <p>
+              <b>Monto Total:</b> $
+              {selectedVisita.facturas.montoTotal?.toFixed(2)}
+            </p>
+            <div className="mt-4">
+              <h3 className="font-semibold">Archivos:</h3>
+              <ul className="list-disc ml-6">
+                {selectedVisita.facturas.archivos.map((f) => (
+                  <li key={f.id}>
+                    <a
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {f.nombre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,13 +23,13 @@ model User {
   updatedAt DateTime  @updatedAt
 
   // Relaciones
-  visitasRegistradas Visita[]     @relation("VisitasGerente")
+  visitasRegistradas Visita[] @relation("VisitasGerente")
 }
 
 model Visita {
-  id          Int   @id @default(autoincrement())
-  gerenteId   Int
-  gerente     User  @relation("VisitasGerente", fields: [gerenteId], references: [id])
+  id        Int  @id @default(autoincrement())
+  gerenteId Int
+  gerente   User @relation("VisitasGerente", fields: [gerenteId], references: [id])
 
   // Datos del cliente
   clienteCodigo String
@@ -43,11 +43,15 @@ model Visita {
   personaVisita String?
   motivo        String
 
-  fecha_ida     DateTime
-  fecha_regreso DateTime
-  lugar         String?
-  requiereAvion Boolean @default(false)
-  estado        EstadoVisita @default(pendiente)
+  ciudad_origen  String
+  fecha_ida      DateTime
+  fecha_regreso  DateTime
+  lugar          String?
+  requiereAvion  Boolean      @default(false)
+  estado         EstadoVisita @default(pendiente)
+  area           String       @default("")
+  gastos_viaje   String
+  fondos_fabrica Boolean      @default(false)
 
   // Relaciones
   facturas     Factura?
@@ -58,33 +62,33 @@ model Visita {
 }
 
 model Factura {
-  id         Int              @id @default(autoincrement())
-  visitaId   Int              @unique // 👈 asegura que solo exista un registro por visita
-  visita     Visita           @relation(fields: [visitaId], references: [id])
-  archivos   ArchivoFactura[] // 👈 varios archivos dentro del mismo grupo
+  id          Int              @id @default(autoincrement())
+  visitaId    Int              @unique // 👈 asegura que solo exista un registro por visita
+  visita      Visita           @relation(fields: [visitaId], references: [id])
+  archivos    ArchivoFactura[] // 👈 varios archivos dentro del mismo grupo
   descripcion String?
   montoTotal  Float?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime         @default(now())
 }
 
 model ArchivoFactura {
   id        Int      @id @default(autoincrement())
   facturaId Int
   factura   Factura  @relation(fields: [facturaId], references: [id])
-  nombre    String   // nombre original del archivo
-  url       String   // ruta donde quedó guardado (S3, disco, etc.)
+  nombre    String // nombre original del archivo
+  url       String // ruta donde quedó guardado (S3, disco, etc.)
   createdAt DateTime @default(now())
 }
 
 model Aprobacion {
-  id          Int              @id @default(autoincrement())
-  visitaId    Int
-  visita      Visita           @relation(fields: [visitaId], references: [id])
+  id       Int    @id @default(autoincrement())
+  visitaId Int
+  visita   Visita @relation(fields: [visitaId], references: [id])
 
-  rol         RolAprobacion
-  estado      EstadoAprobacion @default(pendiente)
-  comentario  String?
-  fecha       DateTime         @default(now())
+  rol        RolAprobacion
+  estado     EstadoAprobacion @default(pendiente)
+  comentario String?
+  fecha      DateTime         @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,4 +117,5 @@ enum RolAprobacion {
   vicepresidencia
   tiquetes
   transporte
+  notas_credito
 }

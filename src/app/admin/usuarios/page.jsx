@@ -144,7 +144,7 @@ export default function UsuariosPage() {
                       {/* Botón para editar usuario */}
                       <button
                         onClick={() =>
-                          router.push(`admin/usuarios/${user.id}/editar_usuario/`)
+                          router.push(`/admin/usuarios/${user.id}/editar_usuario/`)
                         }
                         className="px-3 py-1 text-sm sm:text-base bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition w-full sm:w-auto"
                       >

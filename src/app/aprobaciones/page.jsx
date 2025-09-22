@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  RefreshCw,
-} from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Eye, RefreshCw } from "lucide-react";
 
 const ESTADOS = [
   { value: "todos", label: "Todos" },
@@ -21,7 +15,9 @@ function fmtDate(iso) {
   try {
     const d = new Date(iso);
     return (
-      d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      d.toLocaleDateString() +
+      " " +
+      d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     );
   } catch {
     return "-";
@@ -38,7 +34,11 @@ function EstadoBadge({ estado }) {
     rechazado: "bg-red-100 text-red-800",
   };
   return (
-    <span className={`px-2 py-1 rounded text-sm capitalize ${map[key] || "bg-gray-100 text-gray-800"}`}>
+    <span
+      className={`px-2 py-1 rounded text-sm capitalize ${
+        map[key] || "bg-gray-100 text-gray-800"
+      }`}
+    >
       {estado || "-"}
     </span>
   );
@@ -85,7 +85,12 @@ export default function VerAprobaciones() {
     setError("");
     try {
       const res = await fetch(`/api/approvals?${qp}`, { signal });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error("No tienes permisos para aprobar visitas");
+        }
+        throw new Error(`Error ${res.status}`);
+      }
       const json = await res.json();
       setData(json.rows || []);
       setTotal(json.total || 0);
@@ -132,7 +137,9 @@ export default function VerAprobaciones() {
     // optimista
     setData((rows) =>
       rows.map((r) =>
-        r.id === id ? { ...r, estado: action === "aprobar" ? "aprobado" : "rechazado" } : r
+        r.id === id
+          ? { ...r, estado: action === "aprobar" ? "aprobado" : "rechazado" }
+          : r
       )
     );
     setMutating(true);
@@ -146,7 +153,6 @@ export default function VerAprobaciones() {
         const txt = await res.text().catch(() => "");
         throw new Error(txt || `No se pudo ${action}`);
       }
-      // refrescar lista para obtener estados reales y cambios en visitas
       await fetchAprobaciones();
     } catch (e) {
       console.error("mutateAprobacion error:", e);
@@ -163,8 +169,12 @@ export default function VerAprobaciones() {
     const contacto = row?.visita?.contacto || "";
     const ciudad = row?.visita?.ciudad || "-";
     const pais = row?.visita?.pais || "";
-    const fechaIda = row?.visita?.fecha_ida ? fmtDate(row.visita.fecha_ida) : "-";
-    const fechaRegreso = row?.visita?.fecha_regreso ? fmtDate(row.visita.fecha_regreso) : "-";
+    const fechaIda = row?.visita?.fecha_ida
+      ? fmtDate(row.visita.fecha_ida)
+      : "-";
+    const fechaRegreso = row?.visita?.fecha_regreso
+      ? fmtDate(row.visita.fecha_regreso)
+      : "-";
     const gerente = row?.visita?.gerente?.name || "-";
     const estadoRow = row?.estado || "pendiente";
     const rol = row?.rol || "-";
@@ -176,8 +186,13 @@ export default function VerAprobaciones() {
       <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
         <div className="md:col-span-3">
           <div className="font-semibold text-lg truncate">{cliente}</div>
-          {contacto && <div className="text-sm text-gray-500 truncate">{contacto}</div>}
-          <div className="text-xs text-gray-400 mt-1">{ciudad}{pais ? `, ${pais}` : ""}</div>
+          {contacto && (
+            <div className="text-sm text-gray-500 truncate">{contacto}</div>
+          )}
+          <div className="text-xs text-gray-400 mt-1">
+            {ciudad}
+            {pais ? `, ${pais}` : ""}
+          </div>
         </div>
 
         <div className="md:col-span-2 text-sm">
@@ -202,7 +217,9 @@ export default function VerAprobaciones() {
 
         <div className="md:col-span-1 flex flex-col items-center">
           <EstadoBadge estado={estadoRow} />
-          <div className="text-xs text-gray-400 mt-1">Visita: <span className="font-medium">{visitaEstado}</span></div>
+          <div className="text-xs text-gray-400 mt-1">
+            Visita: <span className="font-medium">{visitaEstado}</span>
+          </div>
         </div>
 
         <div className="md:col-span-1 flex gap-2 justify-end md:justify-center">
@@ -239,114 +256,127 @@ export default function VerAprobaciones() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      {/* Encabezado y filtros */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">Aprobaciones</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 mb-6">
+        Autorizaciones
+      </h1>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
-          <button
-            className="px-3 py-2 border rounded flex items-center gap-2 hover:bg-gray-100 transition"
-            onClick={() => fetchAprobaciones()}
-            disabled={loading}
-          >
-            <RefreshCw className="w-4 h-4" /> Refrescar
-          </button>
-
-          <select
-            value={estado}
-            onChange={(e) => {
-              setPage(1);
-              setEstado(e.target.value);
-            }}
-            className="px-2 py-2 border rounded bg-white"
-          >
-            {ESTADOS.map((e) => (
-              <option key={e.value} value={e.value}>
-                {e.label}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="text"
-            placeholder="Buscar cliente, ciudad, gerente..."
-            value={q}
-            onChange={(e) => {
-              setPage(1);
-              setQ(e.target.value);
-            }}
-            className="px-3 py-2 border rounded w-full sm:w-[320px]"
-          />
+      {error === "No tienes permisos para aprobar visitas" ? (
+        <div className="p-6 bg-white border rounded text-center text-red-600 font-medium">
+          {error}
         </div>
-      </div>
-
-      {/* Contenido */}
-      <div className="border rounded-lg shadow-sm bg-white">
-        {error && <div className="p-3 text-sm text-red-600">{error}</div>}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
-            <Loader2 className="w-5 h-5 animate-spin" /> Cargando aprobaciones...
-          </div>
-        ) : data.length === 0 ? (
-          <div className="py-12 text-center text-gray-500">No hay aprobaciones para mostrar.</div>
-        ) : (
-          <div className="flex flex-col divide-y">
-            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b text-sm font-semibold text-gray-700">
-              <div className="col-span-3">Cliente</div>
-              <div className="col-span-2">Gerente</div>
-              <div className="col-span-2">Rol</div>
-              <div className="col-span-2">Creada</div>
-              <div className="col-span-1">Comentario</div>
-              <div className="col-span-1 text-center">Estado</div>
-              <div className="col-span-1 text-center">Acciones</div>
-            </div>
-
-            {data.map((row) => (
-              <Row key={row.id} row={row} />
-            ))}
-          </div>
-        )}
-
-        {/* Paginación */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4">
-          <div className="text-sm text-gray-500">
-            Página {page} de {totalPages} • {total} elementos
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={perPage}
-              onChange={(e) => {
-                setPage(1);
-                setPerPage(Number(e.target.value));
-              }}
-              className="px-2 py-2 border rounded bg-white"
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>
-                  {n} / pág
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
+      ) : (
+        <>
+          {/* Encabezado y filtros */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
               <button
-                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-2 border rounded flex items-center gap-2 hover:bg-gray-100 transition"
+                onClick={() => fetchAprobaciones()}
+                disabled={loading}
               >
-                Anterior
+                <RefreshCw className="w-4 h-4" /> Refrescar
               </button>
-              <button
-                className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+
+              <select
+                value={estado}
+                onChange={(e) => {
+                  setPage(1);
+                  setEstado(e.target.value);
+                }}
+                className="px-2 py-2 border rounded bg-white"
               >
-                Siguiente
-              </button>
+                {ESTADOS.map((e) => (
+                  <option key={e.value} value={e.value}>
+                    {e.label}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Buscar cliente, ciudad, gerente..."
+                value={q}
+                onChange={(e) => {
+                  setPage(1);
+                  setQ(e.target.value);
+                }}
+                className="px-3 py-2 border rounded w-full sm:w-[320px]"
+              />
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Contenido */}
+          <div className="border rounded-lg shadow-sm bg-white">
+            {error && <div className="p-3 text-sm text-red-600">{error}</div>}
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Cargando
+                aprobaciones...
+              </div>
+            ) : data.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">
+                No hay aprobaciones para mostrar.
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y">
+                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b text-sm font-semibold text-gray-700">
+                  <div className="col-span-3">Cliente</div>
+                  <div className="col-span-2">Gerente</div>
+                  <div className="col-span-2">Rol</div>
+                  <div className="col-span-2">Creada</div>
+                  <div className="col-span-1">Comentario</div>
+                  <div className="col-span-1 text-center">Estado</div>
+                  <div className="col-span-1 text-center">Acciones</div>
+                </div>
+
+                {data.map((row) => (
+                  <Row key={row.id} row={row} />
+                ))}
+              </div>
+            )}
+
+            {/* Paginación */}
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4">
+              <div className="text-sm text-gray-500">
+                Página {page} de {totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={perPage}
+                  onChange={(e) => {
+                    setPage(1);
+                    setPerPage(Number(e.target.value));
+                  }}
+                  className="px-2 py-2 border rounded bg-white"
+                >
+                  {[10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n} / pág
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Confirm modal */}
       {confirmOpen && currentRow && (
@@ -355,7 +385,8 @@ export default function VerAprobaciones() {
             <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
               {confirmType === "aprobar" ? (
                 <>
-                  <CheckCircle2 className="w-5 h-5 text-green-500" /> Confirmar aprobación
+                  <CheckCircle2 className="w-5 h-5 text-green-500" /> Confirmar
+                  aprobación
                 </>
               ) : (
                 <>
@@ -365,11 +396,13 @@ export default function VerAprobaciones() {
             </h2>
             <p className="text-sm text-gray-600 mb-4">
               {confirmType === "aprobar"
-                ? "Esta acción aprobará la visita y notificará al solicitante."
+                ? "Esta acción aprobará la visita y notificará a compras internas y adquisiciones internas para continuar con el proceso."
                 : "Esta acción rechazará la visita. Puedes agregar un motivo."}
             </p>
             <div className="mb-4">
-              <label className="text-sm block mb-1">Comentario (opcional)</label>
+              <label className="text-sm block mb-1">
+                Comentario (opcional)
+              </label>
               <textarea
                 className="w-full border rounded p-2"
                 rows={3}
@@ -413,44 +446,97 @@ export default function VerAprobaciones() {
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-xl font-semibold">Detalle de aprobación</h2>
-              <button className="text-gray-500" onClick={() => setDetailOpen(false)}>Cerrar</button>
+              <button
+                className="text-gray-500"
+                onClick={() => setDetailOpen(false)}
+              >
+                Cerrar
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div><span className="font-medium">Cliente:</span> {currentRow.visita?.cliente}</div>
-              <div><span className="font-medium">Gerente:</span> {currentRow.visita?.gerente?.name}</div>
-              <div><span className="font-medium">Ciudad / País:</span> {currentRow.visita?.ciudad} {currentRow.visita?.pais ? ` / ${currentRow.visita?.pais}` : ""}</div>
-              <div><span className="font-medium">Lugar:</span> {currentRow.visita?.lugar || "-"}</div>
-              <div><span className="font-medium">Fechas:</span> {currentRow.visita?.fecha_ida ? fmtDate(currentRow.visita.fecha_ida) : "-"} → {currentRow.visita?.fecha_regreso ? fmtDate(currentRow.visita.fecha_regreso) : "-"}</div>
-              <div><span className="font-medium">Estado visita:</span> <EstadoBadge estado={currentRow.visita?.estado} /></div>
-              <div><span className="font-medium">Requiere tiquetes aereos:</span> {currentRow.visita?.requiereAvion}</div>
-              <div className="col-span-2"><span className="font-medium">Motivo:</span> {currentRow.visita?.motivo || "-"}</div>
+              <div>
+                <span className="font-medium">Cliente:</span>{" "}
+                {currentRow.visita?.cliente}
+              </div>
+              <div>
+                <span className="font-medium">Gerente:</span>{" "}
+                {currentRow.visita?.gerente?.name}
+              </div>
+              <div>
+                <span className="font-medium">Ciudad / País:</span>{" "}
+                {currentRow.visita?.ciudad}{" "}
+                {currentRow.visita?.pais ? ` / ${currentRow.visita?.pais}` : ""}
+              </div>
+              <div>
+                <span className="font-medium">Lugar:</span>{" "}
+                {currentRow.visita?.lugar || "-"}
+              </div>
+              <div>
+                <span className="font-medium">Fechas:</span>{" "}
+                {currentRow.visita?.fecha_ida
+                  ? fmtDate(currentRow.visita.fecha_ida)
+                  : "-"}{" "}
+                →{" "}
+                {currentRow.visita?.fecha_regreso
+                  ? fmtDate(currentRow.visita.fecha_regreso)
+                  : "-"}
+              </div>
+              <div>
+                <span className="font-medium">Estado visita:</span>{" "}
+                <EstadoBadge estado={currentRow.visita?.estado} />
+              </div>
+              <div>
+                <span className="font-medium">Requiere tiquetes aéreos:</span>{" "}
+                {currentRow.visita?.requiereAvion ? "Sí" : "No"}
+              </div>
+              <div className="col-span-2">
+                <span className="font-medium">Motivo:</span>{" "}
+                {currentRow.visita?.motivo || "-"}
+              </div>
 
               <div className="col-span-2 mt-2">
-                <h3 className="font-semibold mb-2">Aprobaciones relacionadas</h3>
+                <h3 className="font-semibold mb-2">
+                  Aprobaciones relacionadas
+                </h3>
                 <div className="space-y-2">
-                  {Array.isArray(currentRow.visita?.aprobaciones) && currentRow.visita.aprobaciones.length > 0 ? (
+                  {Array.isArray(currentRow.visita?.aprobaciones) &&
+                  currentRow.visita.aprobaciones.length > 0 ? (
                     currentRow.visita.aprobaciones.map((a) => (
-                      <div key={a.id} className="p-3 border rounded flex items-center justify-between">
+                      <div
+                        key={a.id}
+                        className="p-3 border rounded flex items-center justify-between"
+                      >
                         <div>
                           <div className="font-medium">{a.rol}</div>
-                          <div className="text-xs text-gray-500">{a.comentario || "-"}</div>
+                          <div className="text-xs text-gray-500">
+                            {a.comentario || "-"}
+                          </div>
                         </div>
                         <div className="text-right">
                           <EstadoBadge estado={a.estado} />
-                          <div className="text-xs text-gray-400 mt-1">{a.updatedAt ? fmtDate(a.updatedAt) : ""}</div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {a.updatedAt ? fmtDate(a.updatedAt) : ""}
+                          </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-sm text-gray-500">No hay aprobaciones relacionadas.</div>
+                    <div className="text-sm text-gray-500">
+                      No hay aprobaciones relacionadas.
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="flex justify-end mt-6">
-              <button className="px-3 py-2 border rounded hover:bg-gray-100" onClick={() => setDetailOpen(false)}>Cerrar</button>
+              <button
+                className="px-3 py-2 border rounded hover:bg-gray-100"
+                onClick={() => setDetailOpen(false)}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

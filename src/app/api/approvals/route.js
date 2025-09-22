@@ -25,8 +25,11 @@ export async function GET(req) {
     }
 
     let rolFiltrado = null;
+    let filtroArea = null;
+
     if (usuario.role === "vicepresidente") {
       rolFiltrado = "vicepresidencia";
+      filtroArea = usuario.department; // 👈 el área del vicepresidente
     } else if (usuario.role === "aprobador") {
       if (usuario.tipoaprobador === "suministros") {
         rolFiltrado = "transporte";
@@ -50,6 +53,12 @@ export async function GET(req) {
     const skip = (page - 1) * perPage;
 
     const where = { rol: rolFiltrado };
+
+    // ✅ Filtrar por área si es vicepresidente
+    if (filtroArea) {
+      where.visita = { area: filtroArea };
+    }
+
     if (estado && estado !== "todos") {
       if (Object.values(EstadoVisita).includes(estado)) {
         where.estado = estado; // ✅ Enum validado
@@ -80,6 +89,7 @@ export async function GET(req) {
       },
     });
 
+    // Mantener la lógica de dependencias (VP primero, etc.)
     rows = await Promise.all(
       rows.map(async (aprobacion) => {
         const aprobacionesVisita = aprobacion.visita.aprobaciones;

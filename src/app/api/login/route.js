@@ -15,6 +15,8 @@ function determinarRol(title = "") {
     t.includes("team leader")
   ) {
     return "gerenteProducto";
+  } else if (t.includes("vicepresident")) {
+    return "vicepresidente";
   } else if (t.includes("admin") || t.includes("administrador")) {
     return "admin";
   } else if (
@@ -24,8 +26,6 @@ function determinarRol(title = "") {
     return "aprobador";
   } else if (t.includes("trainee")) {
     return "trainee";
-  } else if (t.includes("vicepresident")) {
-    return "vicepresidente";
   } else {
     return "sinRol";
   }
@@ -63,16 +63,17 @@ export async function POST(request) {
     userInfo = {
       displayName: "Usuario Prueba",
       mail: email,
-      department: "IT",
-      title: "trainee",
+      department: "Human Talent and Administrative",
+      title: "Trainee",
       mobile: "3001234567",
     };
 
     role = determinarRol(userInfo.title);
+    console.log(role);
     if (role === "aprobador") {
-      if ((userInfo.title || "").includes("internal procurement")) {
+      if ((userInfo.title || "").includes("Internal Procurement")) {
         tipoaprobador = "adquisiciones";
-      } else if ((userInfo.title || "").includes("internal supply")) {
+      } else if ((userInfo.title || "").includes("Internal Supply")) {
         tipoaprobador = "suministros";
       }
     }
@@ -129,9 +130,9 @@ export async function POST(request) {
 
     role = determinarRol(userInfo.title || "");
     if (role === "aprobador") {
-      if ((userInfo.title || "").includes("internal procurement")) {
+      if ((userInfo.title || "").includes("Internal Procurement")) {
         tipoaprobador = "adquisiciones";
-      } else if ((userInfo.title || "").includes("internal supply")) {
+      } else if ((userInfo.title || "").includes("Internal Supply")) {
         tipoaprobador = "suministros";
       }
     }
