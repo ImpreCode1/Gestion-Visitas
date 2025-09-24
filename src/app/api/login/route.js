@@ -26,6 +26,8 @@ function determinarRol(title = "") {
     return "aprobador";
   } else if (t.includes("trainee")) {
     return "trainee";
+  } else if (t.includes("operating assets director")){
+    return "notas_credito";
   } else {
     return "sinRol";
   }

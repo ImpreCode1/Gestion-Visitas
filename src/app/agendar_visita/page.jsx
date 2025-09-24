@@ -180,8 +180,8 @@ export default function AgendarVisitaPage() {
               <div className="flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
                 <span className="text-gray-600 text-sm">
                   {formData.fondos_fabrica
-                    ? "La fábrica cubre los gastos"
-                    : "Los cubre la empresa"}
+                    ? "Los gastos los cubre la fabrica"
+                    : "Los gastos los cubre Impresistem"}
                 </span>
                 <button
                   type="button"
@@ -215,16 +215,75 @@ export default function AgendarVisitaPage() {
               >
                 Ciudad de origen
               </label>
-              <input
-                type="text"
+              <select
                 id="ciudad_origen"
                 name="ciudad_origen"
                 value={formData.ciudad_origen}
                 onChange={handleChange}
-                placeholder="Ej: Bogotá"
                 className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
                 required
-              />
+              >
+                <option value="">Selecciona una ciudad</option>
+                <option value="Leticia">Leticia</option>
+                <option value="Bello">Bello</option>
+                <option value="Envigado">Envigado</option>
+                <option value="Itagüí">Itagüí</option>
+                <option value="Medellín">Medellín</option>
+                <option value="Puerto Berrío">Puerto Berrío</option>
+                <option value="Arauca">Arauca</option>
+                <option value="Barranquilla">Barranquilla</option>
+                <option value="Soledad">Soledad</option>
+                <option value="Bogotá">Bogotá</option>
+                <option value="Girardot">Girardot</option>
+                <option value="Cartagena">Cartagena</option>
+                <option value="Magangué">Magangué</option>
+                <option value="Duitama">Duitama</option>
+                <option value="Sogamoso">Sogamoso</option>
+                <option value="Tunja">Tunja</option>
+                <option value="Manizales">Manizales</option>
+                <option value="Florencia">Florencia</option>
+                <option value="Yopal">Yopal</option>
+                <option value="Popayán">Popayán</option>
+                <option value="Sevilla">Sevilla</option>
+                <option value="Valledupar">Valledupar</option>
+                <option value="Quibdó">Quibdó</option>
+                <option value="Montería">Montería</option>
+                <option value="Guainía">Guainía</option>
+                <option value="Guaviare">Guaviare</option>
+                <option value="San José del Guaviare">
+                  San José del Guaviare
+                </option>
+                <option value="Neiva">Neiva</option>
+                <option value="Ríohacha">Ríohacha</option>
+                <option value="El Banco">El Banco</option>
+                <option value="Ciénaga">Ciénaga</option>
+                <option value="Santa Marta">Santa Marta</option>
+                <option value="Villavicencio">Villavicencio</option>
+                <option value="Ipiales">Ipiales</option>
+                <option value="Pasto">Pasto</option>
+                <option value="Tumaco">Tumaco</option>
+                <option value="Cúcuta">Cúcuta</option>
+                <option value="Ocaña">Ocaña</option>
+                <option value="Pamplona">Pamplona</option>
+                <option value="Mocoa">Mocoa</option>
+                <option value="Armenia">Armenia</option>
+                <option value="Calarcá">Calarcá</option>
+                <option value="Pereira">Pereira</option>
+                <option value="Santa Rosa de Cabal">Santa Rosa de Cabal</option>
+                <option value="San Andrés y Providencia">
+                  San Andrés y Providencia
+                </option>
+                <option value="Barrancabermeja">Barrancabermeja</option>
+                <option value="Bucaramanga">Bucaramanga</option>
+                <option value="Sincelejo">Sincelejo</option>
+                <option value="Ibagué">Ibagué</option>
+                <option value="Buenaventura">Buenaventura</option>
+                <option value="Buga">Buga</option>
+                <option value="Cali">Cali</option>
+                <option value="Palmira">Palmira</option>
+                <option value="Tuluá">Tuluá</option>
+                <option value="Puerto Carreño">Puerto Carreño</option>
+              </select>
             </div>
 
             {/* ✅ Fechas y lugar */}
@@ -286,7 +345,7 @@ export default function AgendarVisitaPage() {
             {!formData.fondos_fabrica && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  ¿La visita requiere avión?
+                  ¿La visita requiere tiquetes aéreos?
                 </label>
                 <div className="flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
                   <span className="text-gray-600 text-sm">
