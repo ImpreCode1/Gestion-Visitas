@@ -490,6 +490,10 @@ export default function VerAprobaciones() {
                 <span className="font-medium">Requiere tiquetes aéreos:</span>{" "}
                 {currentRow.visita?.requiereAvion ? "Sí" : "No"}
               </div>
+              <div>
+                <span className="font-medium">Fondos de fábrica:</span>{" "}
+                {currentRow.visita?.fondos_fabrica ? "Sí" : "No"}
+              </div>
               <div className="col-span-2">
                 <span className="font-medium">Motivo:</span>{" "}
                 {currentRow.visita?.motivo || "-"}

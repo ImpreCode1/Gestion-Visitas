@@ -36,6 +36,8 @@ export async function GET(req) {
       } else if (usuario.tipoaprobador === "adquisiciones") {
         rolFiltrado = "tiquetes";
       }
+    } else if (usuario.role === "notas_credito"){
+      rolFiltrado = "notas_credito";
     }
 
     if (!rolFiltrado) {

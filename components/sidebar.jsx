@@ -119,6 +119,27 @@ const menusPorRol = {
       ],
     },
   ],
+  notas_credito: [
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },
+        { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [
+        { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
+      ],
+    },
+    {
+      titulo: "Aprobaciones",
+      items: [
+        { label: "Aprobaciones", href: "/aprobaciones", icon: <FaCheckCircle /> },
+      ],
+    }
+  ],
   sinRol: [],
 };
 

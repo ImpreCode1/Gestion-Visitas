@@ -28,6 +28,7 @@ export default function EditarUsuario() {
     { value: "admin", label: "Administrador" },
     { value: "aprobador", label: "Aprobador" },
     { value: "vicepresidente", label: "Vicepresidente"},
+    { value: "notas_credito", label: "Notas-Crédito"},
     { value: "trainee", label: "Trainee" },
     { value: "sinRol", label: "Sin Rol" },
   ];

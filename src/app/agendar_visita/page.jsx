@@ -180,7 +180,7 @@ export default function AgendarVisitaPage() {
               <div className="flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
                 <span className="text-gray-600 text-sm">
                   {formData.fondos_fabrica
-                    ? "Los gastos los cubre la fabrica"
+                    ? "Los gastos los cubre el cliente/fábrica"
                     : "Los gastos los cubre Impresistem"}
                 </span>
                 <button

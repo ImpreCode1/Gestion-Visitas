@@ -66,6 +66,9 @@ export default function LoginPage() {
         case "vicepresidente":
           router.push("/aprobaciones");
           break;
+        case "notas_credito":
+          router.push("/aprobaciones");
+          break;
         default:
           router.push("/sin_acceso"); // Usuario sin acceso definido
           break;

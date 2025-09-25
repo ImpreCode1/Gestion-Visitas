@@ -128,7 +128,8 @@ export async function POST(request) {
         estado: "pendiente",
         area: area,
         ciudad_origen: body.ciudad_origen,
-        gastos_viaje: ""
+        gastos_viaje: "",
+        fondos_fabrica: body.fondos_fabrica
       },
     });
 
@@ -144,6 +145,10 @@ export async function POST(request) {
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
+    } else if (body.fondos_fabrica === true) {
+      aprobaciones = [
+        { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente"}
+      ]
     } else {
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },

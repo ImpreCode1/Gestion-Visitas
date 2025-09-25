@@ -6,28 +6,25 @@ import { PrismaClient } from "@prisma/client"; // ORM para la base de datos
 // Función para determinar el rol del usuario a partir de su título en AD
 function determinarRol(title = "") {
   const t = title.toLowerCase();
-  if (
-    t.includes("product manager") ||
-    t.includes("gerente de producto") ||
-    t.includes("gerente producto") ||
-    t.includes("gte de pdto") ||
-    t.includes("director") ||
-    t.includes("team leader")
+  if (t.includes(process.env.NOTAS_CREDITO)){
+    return "notas_credito";
+  } else if (
+    t.includes(process.env.PRODUCT_MANAGER) ||
+    t.includes(process.env.DIRECTOR) ||
+    t.includes(process.env.TEAM_LEADER)
   ) {
     return "gerenteProducto";
-  } else if (t.includes("vicepresident")) {
+  } else if (t.includes(process.env.VICEPRESIDENTE)) {
     return "vicepresidente";
-  } else if (t.includes("admin") || t.includes("administrador")) {
+  } else if (t.includes(process.env.ADMINISTRADOR)) {
     return "admin";
   } else if (
-    t.includes("internal procurement") ||
-    t.includes("internal supply")
+    t.includes(process.env.INTERNAL_PROCUREMENT) ||
+    t.includes(process.env.INTERNAL_SUPPLY)
   ) {
     return "aprobador";
-  } else if (t.includes("trainee")) {
+  } else if (t.includes(process.env.TRAINEE)) {
     return "trainee";
-  } else if (t.includes("operating assets director")){
-    return "notas_credito";
   } else {
     return "sinRol";
   }
