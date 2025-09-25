@@ -177,8 +177,8 @@ export default function AgendarVisitaPage() {
               <label className="text-sm font-medium text-gray-700">
                 Fondos de fábrica
               </label>
-              <div className="flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
-                <span className="text-gray-600 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border rounded-lg bg-white">
+                <span className="text-gray-600 text-sm mb-2 sm:mb-0">
                   {formData.fondos_fabrica
                     ? "Los gastos los cubre el cliente/fábrica"
                     : "Los gastos los cubre Impresistem"}
