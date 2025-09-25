@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient, EstadoVisita } from "@prisma/client";
+import { PrismaClient, EstadoAprobacion } from "@prisma/client";
 import { jwtVerify } from "jose";
 
 const prisma = new PrismaClient();
@@ -36,7 +36,7 @@ export async function GET(req) {
       } else if (usuario.tipoaprobador === "adquisiciones") {
         rolFiltrado = "tiquetes";
       }
-    } else if (usuario.role === "notas_credito"){
+    } else if (usuario.role === "notas_credito") {
       rolFiltrado = "notas_credito";
     }
 
@@ -62,14 +62,14 @@ export async function GET(req) {
     }
 
     if (estado && estado !== "todos") {
-      if (Object.values(EstadoVisita).includes(estado)) {
+      if (Object.values(EstadoAprobacion).includes(estado)) {
         where.estado = estado; // ✅ Enum validado
       }
     }
     if (q.length > 0) {
       where.OR = [
         { visita: { cliente: { contains: q } } },
-        { visita: { ciudad: { contains: q } } },
+        { visita: { ciudad: { contains: q} } },
         { visita: { gerente: { name: { contains: q } } } },
       ];
     }

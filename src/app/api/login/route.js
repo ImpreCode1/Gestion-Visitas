@@ -9,6 +9,11 @@ function determinarRol(title = "") {
   if (t.includes(process.env.NOTAS_CREDITO)){
     return "notas_credito";
   } else if (
+    t.includes(process.env.INTERNAL_PROCUREMENT) ||
+    t.includes(process.env.INTERNAL_SUPPLY)
+  ) {
+    return "aprobador";
+  } else if (
     t.includes(process.env.PRODUCT_MANAGER) ||
     t.includes(process.env.DIRECTOR) ||
     t.includes(process.env.TEAM_LEADER)
@@ -18,11 +23,6 @@ function determinarRol(title = "") {
     return "vicepresidente";
   } else if (t.includes(process.env.ADMINISTRADOR)) {
     return "admin";
-  } else if (
-    t.includes(process.env.INTERNAL_PROCUREMENT) ||
-    t.includes(process.env.INTERNAL_SUPPLY)
-  ) {
-    return "aprobador";
   } else if (t.includes(process.env.TRAINEE)) {
     return "trainee";
   } else {

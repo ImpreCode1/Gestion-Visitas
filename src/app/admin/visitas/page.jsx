@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, XCircle, CheckCircle2, Plane, User, X } from "lucide-react";
+import { FileText, XCircle, CheckCircle2, Plane, User, X, Search } from "lucide-react";
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState([]);
@@ -12,7 +12,12 @@ export default function VisitasPage() {
   const [showDetalles, setShowDetalles] = useState(false);
   const [showFacturas, setShowFacturas] = useState(false);
 
-  // 🔹 Cargar visitas al montar
+  // 🔎 filtros
+  const [search, setSearch] = useState("");
+  const [estadoFilter, setEstadoFilter] = useState("todos");
+  const [soloAvion, setSoloAvion] = useState(false);
+
+  // cargar visitas
   useEffect(() => {
     const fetchVisitas = async () => {
       try {
@@ -30,14 +35,71 @@ export default function VisitasPage() {
     fetchVisitas();
   }, []);
 
+  // aplicar filtros
+  const visitasFiltradas = visitas.filter((v) => {
+    const term = search.toLowerCase();
+    const matchesSearch =
+      v.cliente.toLowerCase().includes(term) ||
+      v.clienteCodigo.toLowerCase().includes(term) ||
+      v.motivo?.toLowerCase().includes(term) ||
+      v.lugar?.toLowerCase().includes(term) ||
+      v.gerente.name.toLowerCase().includes(term) ||
+      v.gerente.email.toLowerCase().includes(term);
+
+    const matchesEstado =
+      estadoFilter === "todos" ? true : v.estado === estadoFilter;
+
+    const matchesAvion = soloAvion ? v.requiereAvion : true;
+
+    return matchesSearch && matchesEstado && matchesAvion;
+  });
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Encabezado */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 text-center flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800">
             Historial de Visitas
           </h1>
+
+          {/* 🔎 Busqueda + filtros */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 pr-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Estado */}
+            <select
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value)}
+              className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+            </select>
+
+            {/* Avión */}
+            <label className="flex items-center gap-1 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={soloAvion}
+                onChange={(e) => setSoloAvion(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              Requiere avión
+            </label>
+          </div>
         </div>
 
         {/* Tabla */}
@@ -76,8 +138,8 @@ export default function VisitasPage() {
                     Cargando visitas...
                   </td>
                 </tr>
-              ) : visitas.length > 0 ? (
-                visitas.map((visita, idx) => (
+              ) : visitasFiltradas.length > 0 ? (
+                visitasFiltradas.map((visita, idx) => (
                   <tr
                     key={visita.id}
                     className={`border-b hover:bg-gray-50 transition ${

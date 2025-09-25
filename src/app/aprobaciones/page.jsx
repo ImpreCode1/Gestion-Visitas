@@ -45,6 +45,7 @@ function EstadoBadge({ estado }) {
 }
 
 export default function VerAprobaciones() {
+  // --- state / lógica ---
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -164,6 +165,7 @@ export default function VerAprobaciones() {
     }
   }
 
+  // --- Row (presentación responsive) ---
   function Row({ row }) {
     const cliente = row?.visita?.cliente || "-";
     const contacto = row?.visita?.contacto || "";
@@ -183,96 +185,123 @@ export default function VerAprobaciones() {
     const visitaEstado = row?.visita?.estado || "-";
 
     return (
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-        <div className="md:col-span-3">
-          <div className="font-semibold text-lg truncate">{cliente}</div>
-          {contacto && (
-            <div className="text-sm text-gray-500 truncate">{contacto}</div>
-          )}
-          <div className="text-xs text-gray-400 mt-1">
-            {ciudad}
-            {pais ? `, ${pais}` : ""}
+      // tarjeta en móvil, fila en desktop (grid)
+      <div className="bg-white md:bg-transparent md:px-6 md:py-3 border-b md:border-0">
+        <div className="p-4 bg-white rounded-lg shadow-sm md:shadow-none md:border md:border-gray-100 md:rounded-none md:bg-transparent md:flex md:items-center">
+          {/* Desktop grid */}
+          <div className="w-full md:grid md:grid-cols-12 md:gap-4 md:items-center">
+            {/* Cliente */}
+            <div className="md:col-span-3 mb-3 md:mb-0">
+              <div className="font-semibold text-lg text-gray-800 truncate">
+                {cliente}
+              </div>
+              {contacto && (
+                <div className="text-sm text-gray-500 truncate">{contacto}</div>
+              )}
+              <div className="text-xs text-gray-400 mt-1">
+                {ciudad}
+                {pais ? `, ${pais}` : ""}
+              </div>
+            </div>
+
+            {/* Gerente */}
+            <div className="md:col-span-2 text-sm mb-2 md:mb-0">
+              <div className="text-gray-500">Gerente</div>
+              <div className="font-medium text-gray-700 truncate">
+                {gerente}
+              </div>
+            </div>
+
+            {/* Rol */}
+            <div className="md:col-span-2 text-sm mb-2 md:mb-0">
+              <div className="text-gray-500">Rol</div>
+              <div className="font-medium text-gray-700">{rol}</div>
+            </div>
+
+            {/* Fecha de creación */}
+            <div className="md:col-span-2 text-sm mb-2 md:mb-0">
+              <div className="text-gray-500">Creada</div>
+              <div className="font-medium text-gray-700">{fechaCreacion}</div>
+            </div>
+
+            {/* Comentario */}
+            <div className="md:col-span-2 text-sm mb-2 md:mb-0">
+              <div className="text-gray-500">Comentario</div>
+              <div className="font-medium text-gray-700 truncate max-w-[12rem]">
+                {comentarioRow}
+              </div>
+            </div>
+
+            {/* Estado */}
+            <div className="md:col-span-1 flex flex-col items-start md:items-center mb-3 md:mb-0">
+              <EstadoBadge estado={estadoRow} />
+              <div className="text-xs text-gray-400 mt-2 md:mt-1">
+                Visita:{" "}
+                <span className="font-medium text-gray-600">
+                  {visitaEstado}
+                </span>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="md:col-span-12 lg:col-span-0 flex gap-2 justify-end md:justify-center mt-3 md:mt-0">
+              <button
+                className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                title="Ver detalle"
+                onClick={() => {
+                  setCurrentRow(row);
+                  setDetailOpen(true);
+                }}
+                aria-label="Ver detalle"
+              >
+                <Eye className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                title="Aprobar"
+                onClick={() => openConfirm("aprobar", row)}
+                disabled={estadoRow !== "pendiente" || mutating}
+                aria-label="Aprobar"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+              </button>
+              <button
+                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                title="Rechazar"
+                onClick={() => openConfirm("rechazar", row)}
+                disabled={estadoRow !== "pendiente" || mutating}
+                aria-label="Rechazar"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className="md:col-span-2 text-sm">
-          <div className="text-gray-500">Gerente</div>
-          <div className="font-medium truncate">{gerente}</div>
-        </div>
-
-        <div className="md:col-span-2 text-sm">
-          <div className="text-gray-500">Rol</div>
-          <div className="font-medium">{rol}</div>
-        </div>
-
-        <div className="md:col-span-2 text-sm">
-          <div className="text-gray-500">Creada</div>
-          <div className="font-medium">{fechaCreacion}</div>
-        </div>
-
-        <div className="md:col-span-1 text-sm truncate max-w-xs">
-          <div className="text-gray-500">Comentario</div>
-          <div className="font-medium">{comentarioRow}</div>
-        </div>
-
-        <div className="md:col-span-1 flex flex-col items-center">
-          <EstadoBadge estado={estadoRow} />
-          <div className="text-xs text-gray-400 mt-1">
-            Visita: <span className="font-medium">{visitaEstado}</span>
-          </div>
-        </div>
-
-        <div className="md:col-span-1 flex gap-2 justify-end md:justify-center">
-          <button
-            className="p-2 border rounded hover:bg-gray-50"
-            title="Ver detalle"
-            onClick={() => {
-              setCurrentRow(row);
-              setDetailOpen(true);
-            }}
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            className="p-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-            title="Aprobar"
-            onClick={() => openConfirm("aprobar", row)}
-            disabled={estadoRow !== "pendiente" || mutating}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-          </button>
-          <button
-            className="p-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-            title="Rechazar"
-            onClick={() => openConfirm("rechazar", row)}
-            disabled={estadoRow !== "pendiente" || mutating}
-          >
-            <XCircle className="w-4 h-4" />
-          </button>
         </div>
       </div>
     );
   }
 
+  // --- render principal ---
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 mb-6">
+      <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-6">
         Autorizaciones
       </h1>
 
       {error === "No tienes permisos para aprobar visitas" ? (
-        <div className="p-6 bg-white border rounded text-center text-red-600 font-medium">
+        <div className="p-6 bg-white border border-red-100 rounded-lg text-center text-red-600 font-semibold shadow-sm">
           {error}
         </div>
       ) : (
         <>
-          {/* Encabezado y filtros */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
               <button
-                className="px-3 py-2 border rounded flex items-center gap-2 hover:bg-gray-100 transition"
+                className="px-4 py-2 bg-white border rounded-lg flex items-center gap-2 shadow-sm hover:bg-gray-50 transition text-sm"
                 onClick={() => fetchAprobaciones()}
                 disabled={loading}
+                aria-label="Refrescar"
               >
                 <RefreshCw className="w-4 h-4" /> Refrescar
               </button>
@@ -283,7 +312,8 @@ export default function VerAprobaciones() {
                   setPage(1);
                   setEstado(e.target.value);
                 }}
-                className="px-2 py-2 border rounded bg-white"
+                className="px-3 py-2 border rounded-lg bg-white text-sm shadow-sm"
+                aria-label="Filtrar estado"
               >
                 {ESTADOS.map((e) => (
                   <option key={e.value} value={e.value}>
@@ -300,55 +330,65 @@ export default function VerAprobaciones() {
                   setPage(1);
                   setQ(e.target.value);
                 }}
-                className="px-3 py-2 border rounded w-full sm:w-[320px]"
+                className="px-4 py-2 border rounded-lg w-full sm:w-[340px] text-sm shadow-sm"
+                aria-label="Buscar"
               />
             </div>
           </div>
 
           {/* Contenido */}
-          <div className="border rounded-lg shadow-sm bg-white">
-            {error && <div className="p-3 text-sm text-red-600">{error}</div>}
+          <div className="bg-white border rounded-xl shadow-md overflow-hidden">
+            {error && (
+              <div className="p-4 text-sm text-red-600 bg-red-50 border-b">
+                {error}
+              </div>
+            )}
 
             {loading ? (
-              <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
+              <div className="flex items-center justify-center py-16 text-gray-500 gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" /> Cargando
                 aprobaciones...
               </div>
             ) : data.length === 0 ? (
-              <div className="py-12 text-center text-gray-500">
+              <div className="py-16 text-center text-gray-500">
                 No hay aprobaciones para mostrar.
               </div>
             ) : (
-              <div className="flex flex-col divide-y">
-                <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b text-sm font-semibold text-gray-700">
+              <>
+                {/* header tabla en desktop */}
+                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-100 text-sm font-semibold text-gray-700 border-b">
                   <div className="col-span-3">Cliente</div>
                   <div className="col-span-2">Gerente</div>
                   <div className="col-span-2">Rol</div>
                   <div className="col-span-2">Creada</div>
-                  <div className="col-span-1">Comentario</div>
+                  <div className="col-span-2">Comentario</div>
                   <div className="col-span-1 text-center">Estado</div>
-                  <div className="col-span-1 text-center">Acciones</div>
                 </div>
 
-                {data.map((row) => (
-                  <Row key={row.id} row={row} />
-                ))}
-              </div>
+                {/* filas/cards */}
+                <div className="divide-y">
+                  {data.map((row) => (
+                    <Row key={row.id} row={row} />
+                  ))}
+                </div>
+              </>
             )}
 
             {/* Paginación */}
-            <div className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4">
-              <div className="text-sm text-gray-500">
-                Página {page} de {totalPages}
+            <div className="flex flex-col sm:flex-row items-center justify-between p-6 gap-4 border-t bg-gray-50">
+              <div className="text-sm text-gray-600">
+                Página <span className="font-medium">{page}</span> de{" "}
+                <span className="font-medium">{totalPages}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <select
                   value={perPage}
                   onChange={(e) => {
                     setPage(1);
                     setPerPage(Number(e.target.value));
                   }}
-                  className="px-2 py-2 border rounded bg-white"
+                  className="px-3 py-2 border rounded-lg bg-white shadow-sm"
+                  aria-label="Filas por página"
                 >
                   {[10, 20, 50].map((n) => (
                     <option key={n} value={n}>
@@ -356,16 +396,17 @@ export default function VerAprobaciones() {
                     </option>
                   ))}
                 </select>
+
                 <div className="flex gap-2">
                   <button
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+                    className="px-3 py-2 border rounded-lg bg-white shadow-sm disabled:opacity-50 hover:bg-gray-100 transition"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
                     Anterior
                   </button>
                   <button
-                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-100 transition"
+                    className="px-3 py-2 border rounded-lg bg-white shadow-sm disabled:opacity-50 hover:bg-gray-100 transition"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   >
@@ -380,9 +421,9 @@ export default function VerAprobaciones() {
 
       {/* Confirm modal */}
       {confirmOpen && currentRow && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
               {confirmType === "aprobar" ? (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-green-500" /> Confirmar
@@ -394,25 +435,27 @@ export default function VerAprobaciones() {
                 </>
               )}
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
               {confirmType === "aprobar"
                 ? "Esta acción aprobará la visita y notificará a compras internas y adquisiciones internas para continuar con el proceso."
-                : "Esta acción rechazará la visita. Puedes agregar un motivo."}
+                : "Esta acción rechazará la visita y se notificará por correo electrónico al solicitante. Por favor agrega el motivo."}
             </p>
-            <div className="mb-4">
-              <label className="text-sm block mb-1">
+
+            <div className="mb-6">
+              <label className="text-sm block mb-1 font-medium text-gray-700">
                 Comentario (opcional)
               </label>
               <textarea
-                className="w-full border rounded p-2"
+                className="w-full border rounded-lg p-3 text-sm focus:ring focus:ring-blue-200"
                 rows={3}
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
               />
             </div>
-            <div className="flex justify-end gap-2">
+
+            <div className="flex justify-end gap-3">
               <button
-                className="px-3 py-2 border rounded hover:bg-gray-100 transition"
+                className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-100 transition"
                 onClick={closeConfirm}
                 disabled={mutating}
               >
@@ -420,7 +463,7 @@ export default function VerAprobaciones() {
               </button>
               {confirmType === "aprobar" ? (
                 <button
-                  className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                   onClick={() => mutateAprobacion("aprobar")}
                   disabled={mutating}
                 >
@@ -428,7 +471,7 @@ export default function VerAprobaciones() {
                 </button>
               ) : (
                 <button
-                  className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                   onClick={() => mutateAprobacion("rechazar")}
                   disabled={mutating}
                 >
@@ -442,7 +485,7 @@ export default function VerAprobaciones() {
 
       {/* Detail modal */}
       {detailOpen && currentRow && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-xl font-semibold">Detalle de aprobación</h2>

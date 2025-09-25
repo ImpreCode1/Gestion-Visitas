@@ -1,31 +1,68 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, EstadoVisita } from "@prisma/client";
+import getTemplate from "../../../../../lib/emails"; // 👈 ajusta la ruta según tu proyecto
 
-const prisma = new PrismaClient(); 
-// Cliente de Prisma para interactuar con la base de datos
+const prisma = new PrismaClient();
 
-// Handler para la ruta POST /api/aprobaciones/[id]
-// Actualiza una aprobación específica y la marca como "rechazada"
 export async function POST(req, { params }) {
   try {
-    // Obtenemos el comentario enviado en el body de la petición
     const { comentario } = await req.json();
 
-    // Actualizamos la aprobación correspondiente al ID de la URL
+    // 1️⃣ Actualizamos la aprobación e incluimos la visita con gerente y aprobaciones
     const aprobacion = await prisma.aprobacion.update({
-      where: { id: parseInt(params.id) }, // ID tomado de los parámetros de la ruta
+      where: { id: parseInt(params.id) },
       data: {
-        estado: "rechazado",    // Se cambia el estado a "rechazado"
-        comentario,             // Se guarda el comentario proporcionado
-        updatedAt: new Date(),  // Se actualiza la fecha de modificación
+        estado: "rechazado",
+        comentario,
+        updatedAt: new Date(),
+      },
+      include: {
+        visita: {
+          include: {
+            gerente: true,
+            aprobaciones: true,
+          },
+        },
       },
     });
 
-    // Retornamos la aprobación actualizada en formato JSON
+    const visita = aprobacion.visita;
+    const aprobaciones = visita.aprobaciones;
+
+    // 2️⃣ Regla de negocio: si alguna aprobación está rechazada, la visita queda rechazada
+    const algunaRechazada = aprobaciones.some((a) => a.estado === "rechazado");
+
+    if (algunaRechazada) {
+      await prisma.visita.update({
+        where: { id: visita.id },
+        data: { estado: EstadoVisita.rechazada },
+      });
+    }
+
+    // 3️⃣ Generamos el HTML del correo
+    const html = getTemplate("rechazar", {
+      usuario: visita.gerente.name,
+      cliente: visita.cliente,
+      motivo: visita.motivo,
+      fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
+      fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
+      comentario,
+    });
+
+    // 4️⃣ Enviamos el correo al gerente
+    await fetch(`${req.nextUrl.origin}/api/send-mail`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: [visita.gerente.email],
+        subject: `Tu visita a ${visita.cliente} fue rechazada`,
+        html,
+      }),
+    });
+
     return NextResponse.json(aprobacion);
   } catch (err) {
-    // Si ocurre un error, se muestra en consola y se devuelve un 500
-    console.error(err);
+    console.error("❌ Error en /rechazar:", err);
     return NextResponse.json({ error: "Error al rechazar" }, { status: 500 });
   }
 }

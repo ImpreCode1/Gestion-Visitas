@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9fafb;
+        margin: 0;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 500px;
+        margin: auto;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #b91c1c;
+      }
+      .info {
+        margin: 10px 0;
+      }
+      .comentario {
+        background: #f3f4f6;
+        padding: 10px;
+        border-radius: 5px;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Visita rechazada</h2>
+      <p>Hola <b>{{usuario}}</b>,</p>
+      <p>
+        Tu solicitud de visita para el cliente <b>{{cliente}}</b> ha sido
+        <span style="color: red">rechazada</span>.
+      </p>
+      <div class="info">
+        <p><b>Motivo de la visita:</b> {{motivo}}</p>
+        <p><b>Fechas:</b> {{fecha_ida}} - {{fecha_regreso}}</p>
+      </div>
+      <div class="comentario">
+        <b>Comentario del revisor:</b><br />
+        "{{comentario}}"
+      </div>
+    </div>
+  </body>
+</html>

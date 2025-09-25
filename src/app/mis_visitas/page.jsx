@@ -12,6 +12,10 @@ export default function MisVisitas() {
   const [isMobile, setIsMobile] = useState(false);
   const [tab, setTab] = useState("calendario");
 
+  // 🔹 estados de búsqueda y filtro
+  const [search, setSearch] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -80,6 +84,17 @@ export default function MisVisitas() {
     };
   });
 
+  // 🔹 aplica búsqueda y filtros
+  const visitasFiltradas = visitas.filter((v) => {
+    const coincideBusqueda =
+      v.cliente.toLowerCase().includes(search.toLowerCase()) ||
+      v.motivo.toLowerCase().includes(search.toLowerCase()) ||
+      v.personaVisita?.toLowerCase().includes(search.toLowerCase() || "");
+    const coincideEstado =
+      filtroEstado === "todos" || v.estado === filtroEstado;
+    return coincideBusqueda && coincideEstado;
+  });
+
   return (
     <div className="flex flex-col w-full h-full p-2 md:p-4">
       <h1 className="text-center text-lg md:text-2xl font-bold text-blue-800 mb-4">
@@ -143,7 +158,6 @@ export default function MisVisitas() {
               );
             }}
             height="auto"
-            // 🔹 Mejoras visuales
             eventDisplay="block"
             dayMaxEventRows={3}
             views={{
@@ -157,7 +171,6 @@ export default function MisVisitas() {
                 },
               },
             }}
-            // 🔹 Clases Tailwind para que los botones se vean bonitos
             dayHeaderClassNames="bg-blue-50 text-blue-700 font-semibold text-xs md:text-sm"
             dayCellClassNames="hover:bg-blue-50 transition cursor-pointer"
             eventClassNames="rounded-md shadow-sm text-xs md:text-sm px-1 py-0.5"
@@ -166,6 +179,28 @@ export default function MisVisitas() {
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-md p-2 md:p-4">
+          {/* 🔹 Barra de búsqueda y filtros */}
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4">
+            <input
+              type="text"
+              placeholder="Buscar por cliente, motivo o persona"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full md:w-1/3 p-2 border rounded-lg text-sm focus:ring focus:ring-blue-200"
+            />
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="w-full md:w-40 mt-2 md:mt-0 p-2 border rounded-lg text-sm"
+            >
+              <option value="todos">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+              <option value="realizada">Realizada</option>
+            </select>
+          </div>
+
           {/* Desktop → tabla enriquecida */}
           {!isMobile ? (
             <table className="w-full text-sm md:text-base border-collapse">
@@ -181,7 +216,7 @@ export default function MisVisitas() {
                 </tr>
               </thead>
               <tbody>
-                {visitas.map((v) => (
+                {visitasFiltradas.map((v) => (
                   <tr
                     key={v.id}
                     className="border-b hover:bg-gray-50 align-top"
@@ -253,7 +288,7 @@ export default function MisVisitas() {
           ) : (
             /* Mobile → Cards más completas */
             <div className="space-y-3">
-              {visitas.map((v) => (
+              {visitasFiltradas.map((v) => (
                 <div
                   key={v.id}
                   className="p-3 border rounded-lg shadow-sm bg-gray-50"
