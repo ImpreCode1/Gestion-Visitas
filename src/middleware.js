@@ -6,7 +6,7 @@ const encoder = new TextEncoder();
 const accessSecret = encoder.encode(process.env.JWT_SECRET);
 const refreshSecret = encoder.encode(process.env.JWT_REFRESH_SECRET);
 
-const ACCESS_TOKEN_EXP = 60*15; // segundos para probar rápido
+const ACCESS_TOKEN_EXP = 60 * 15; // segundos para probar rápido
 
 function setAccessCookie(res, token) {
   res.cookies.set("token", token, {
@@ -45,24 +45,25 @@ export async function middleware(request) {
   const token = request.cookies.get("token")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  // --- /login siempre accesible ---
+  // --- /login y /: no dejar acceder si ya hay token ---
   if (pathname === "/login" || pathname === "/") {
+    // Si no hay tokens, permitir acceso
     if (!token && !refreshToken) return NextResponse.next();
 
-    // Access token válido
+    // Si access token válido, redirigir a /dashboard
     if (token) {
       try {
         await tryVerifyAccess(token);
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect(new URL("/agendar_visita", request.url));
       } catch {}
     }
 
-    // Renovar con refresh token
+    // Si refresh token válido, renovar access token y redirigir a /dashboard
     if (refreshToken) {
       try {
         const { payload } = await tryVerifyRefresh(refreshToken);
         const newAccess = await mintAccessFromRefreshPayload(payload);
-        const res = NextResponse.redirect(new URL("/", request.url));
+        const res = NextResponse.redirect(new URL("/agendar_visita", request.url));
         setAccessCookie(res, newAccess);
         return res;
       } catch {

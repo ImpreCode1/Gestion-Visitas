@@ -1,0 +1,80 @@
+<div
+  style="
+    font-family: Arial, sans-serif;
+    color: #333;
+    max-width: 600px;
+    margin: auto;
+  "
+>
+  <h2 style="color: #0056b3">📌 Nueva solicitud de visita registrada</h2>
+  <p>
+    Se ha registrado una nueva visita en la plataforma. A continuación, los
+    detalles:
+  </p>
+
+  <table style="border-collapse: collapse; width: 100%; margin-top: 10px">
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Colaborador</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{usuario}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Cliente</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{cliente}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Ciudad / País</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{ciudad}}, {{pais}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Ciudad Origen</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{ciudad_origen}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px">
+        <b>Persona a Visitar</b>
+      </td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{personaVisita}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Motivo</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{motivo}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Fecha Ida</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{fecha_ida}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Fecha Regreso</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{fecha_regreso}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px">
+        <b>Requiere tiquetes aéreos</b>
+      </td>
+      <td style="border: 1px solid #ddd; padding: 8px">
+        {{#if requiereAvion}}Sí{{else}}No{{/if}}
+      </td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px"><b>Área</b></td>
+      <td style="border: 1px solid #ddd; padding: 8px">{{area}}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px">
+        <b>Fondos de Fábrica</b>
+      </td>
+      <td style="border: 1px solid #ddd; padding: 8px">
+        {{#if fondos_fabrica}}Sí{{else}}No{{/if}}
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin-top: 20px">
+    👉 Para aprobar o rechazar esta visita, por favor ingrese a la plataforma de
+    gestión de visitas.
+  </p>
+
+  <p style="margin-top: 30px; font-size: 12px; color: #666">
+    Este es un correo automático, por favor no responder.
+  </p>
+</div>

@@ -6,6 +6,14 @@ export async function POST(req) {
     // Obtenemos los datos del correo desde el body de la petición
     const { to, subject, text, html } = await req.json();
 
+    // Normalizamos destinatarios (puede ser string o array)
+    let destinatarios = Array.isArray(to) ? to : [to];
+
+    // Reemplazamos .local por .com en todos los correos
+    destinatarios = destinatarios.map(email =>
+      email.endsWith(".local") ? email.replace(/\.local$/, ".com") : email
+    );
+
     // Configuración del transporter de Nodemailer
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST, // Servidor SMTP
@@ -15,15 +23,14 @@ export async function POST(req) {
 
     // Enviamos el correo usando la configuración del transporter
     await transporter.sendMail({
-      from: '"Sistema de Gestion de Visitas" <no-reply@impresistem.com>', // Remitente
-      to,        // Destinatario(s)
-      subject,   // Asunto
-      text,      // Contenido en texto plano
-      html,      // Contenido en HTML
+      from: '"Sistema de Gestion de Visitas" <no-reply@impresistem.com>',
+      to: destinatarios, // Destinatario(s) corregidos
+      subject,
+      text,
+      html,
     });
 
-    // Retornamos éxito en formato JSON
-    return Response.json({ success: true, message: "Correo enviado (revisa Mailpit)" });
+    return Response.json({ success: true, message: "Correo enviado correctamente" });
   } catch (error) {
     console.error("Error enviando correo:", error);
     return Response.json(

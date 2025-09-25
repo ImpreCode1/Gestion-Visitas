@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@prisma/client";
+import getTemplate from "../../../lib/emails";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -129,7 +130,7 @@ export async function POST(request) {
         area: area,
         ciudad_origen: body.ciudad_origen,
         gastos_viaje: "",
-        fondos_fabrica: body.fondos_fabrica
+        fondos_fabrica: body.fondos_fabrica,
       },
     });
 
@@ -147,8 +148,8 @@ export async function POST(request) {
       ];
     } else if (body.fondos_fabrica === true) {
       aprobaciones = [
-        { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente"}
-      ]
+        { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente" },
+      ];
     } else {
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
@@ -169,6 +170,13 @@ export async function POST(request) {
         },
       });
       if (vp) destinatarios = [vp.email];
+    } else if (body.fondos_fabrica === true) {
+      const notascredito = await prisma.user.findFirst({
+        where: {
+          role: "notas_credito",
+        },
+      });
+      if (notascredito) destinatarios = [notascredito.email];
     } else {
       // coordinadores internos (role que incluya "Internal Supply")
       const coordinadores = await prisma.user.findMany({
@@ -181,6 +189,21 @@ export async function POST(request) {
       destinatarios = coordinadores.map((c) => c.email);
     }
 
+    const html = getTemplate("agendar", {
+      usuario: usuario.name,
+      cliente: nuevaVisita.cliente,
+      ciudad: nuevaVisita.ciudad,
+      pais: nuevaVisita.pais,
+      ciudad_origen: nuevaVisita.ciudad_origen || "No especificada",
+      personaVisita: nuevaVisita.personaVisita,
+      motivo: nuevaVisita.motivo,
+      fecha_ida: nuevaVisita.fecha_ida.toLocaleDateString(),
+      fecha_regreso: nuevaVisita.fecha_regreso.toLocaleDateString(),
+      requiereAvion: nuevaVisita.requiereAvion,
+      area: nuevaVisita.area,
+      fondos_fabrica: nuevaVisita.fondos_fabrica,
+    });
+
     // 🔹 Enviar correo llamando al endpoint /api/send-mail
     if (destinatarios.length > 0) {
       try {
@@ -190,79 +213,7 @@ export async function POST(request) {
           body: JSON.stringify({
             to: destinatarios,
             subject: "Una solicitud para una nueva visita ha sido registrada",
-            html: `
-          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto;">
-            <h2 style="color: #0056b3;">📌 Nueva solicitud de visita registrada</h2>
-            <p>Se ha registrado una nueva visita en la plataforma. A continuación, los detalles:</p>
-
-            <table style="border-collapse: collapse; width: 100%; margin-top: 10px;">
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Colaborador</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  usuario.name
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Cliente</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.cliente
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Ciudad / País</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.ciudad
-                }, ${nuevaVisita.pais}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Ciudad Origen</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.ciudad_origen || "No especificada"
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Persona a Visitar</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.personaVisita
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Motivo</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.motivo
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Fecha Ida</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${nuevaVisita.fecha_ida.toLocaleDateString()}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Fecha Regreso</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${nuevaVisita.fecha_regreso.toLocaleDateString()}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Requiere tiquetes aéreos</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.requiereAvion ? "Sí" : "No"
-                }</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;"><b>Área</b></td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${
-                  nuevaVisita.area
-                }</td>
-              </tr>
-            </table>
-
-            <p style="margin-top: 20px;">
-              👉 Para aprobar o rechazar esta visita, por favor ingrese a la plataforma de gestion de visitas.
-            </p>
-
-            <p style="margin-top: 30px; font-size: 12px; color: #666;">
-              Este es un correo automático, por favor no responder.
-            </p>
-          </div>
-        `,
+            html,
           }),
         });
       } catch (mailError) {
