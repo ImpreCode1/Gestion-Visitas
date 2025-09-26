@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 
 // 🔹 POST /api/facturas
 // Crea o actualiza facturas de una visita, subiendo varios archivos
+// 🔹 POST /api/facturas
 export async function POST(req) {
   try {
     const formData = await req.formData();
@@ -23,13 +24,33 @@ export async function POST(req) {
       );
     }
 
-    // 1. Verificar si ya existe Factura para esta visita
-    let factura = await prisma.factura.findUnique({
-      where: { visitaId },
+    // 1️⃣ Buscar visita y validar fechas
+    const visita = await prisma.visita.findUnique({
+      where: { id: visitaId },
+      select: { fecha_regreso: true },
     });
 
+    if (!visita) {
+      return NextResponse.json(
+        { error: "Visita no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    const limite = new Date(visita.fecha_regreso);
+    limite.setDate(limite.getDate() + 3);
+
+    if (new Date() > limite) {
+      return NextResponse.json(
+        { error: "El plazo para subir facturas ha vencido" },
+        { status: 403 }
+      );
+    }
+
+    // 2️⃣ Verificar si ya existe Factura para esta visita
+    let factura = await prisma.factura.findUnique({ where: { visitaId } });
+
     if (!factura) {
-      // Si no existe, crear nueva factura asociada a la visita
       factura = await prisma.factura.create({
         data: {
           visitaId,
@@ -38,7 +59,6 @@ export async function POST(req) {
         },
       });
     } else {
-      // Si ya existe, actualizar campos
       factura = await prisma.factura.update({
         where: { visitaId },
         data: {
@@ -48,9 +68,8 @@ export async function POST(req) {
       });
     }
 
+    // 3️⃣ Guardar archivos en /public/uploads
     const archivosGuardados = [];
-
-    // 2. Guardar archivos en /public/uploads
     for (const file of files) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
@@ -66,7 +85,7 @@ export async function POST(req) {
       const archivo = await prisma.archivoFactura.create({
         data: {
           facturaId: factura.id,
-          nombre: file.name, // guardar nombre original
+          nombre: file.name,
           url: fileUrl,
         },
       });
@@ -186,7 +205,7 @@ export async function PUT(req) {
       where: { visitaId },
       data: {
         descripcion: descripcion ?? undefined,
-        montoTotal: monto ? parseFloat(monto) : undefined
+        montoTotal: monto ? parseFloat(monto) : undefined,
       },
     });
 
