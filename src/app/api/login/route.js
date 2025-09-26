@@ -63,12 +63,11 @@ export async function POST(request) {
       displayName: "Usuario Prueba",
       mail: email,
       department: "Human Talent and Administrative",
-      title: "Operating Assets Director",
+      title: "Trainee",
       mobile: "3001234567",
     };
 
     role = determinarRol(userInfo.title);
-    console.log(role);
     if (role === "aprobador") {
       if ((userInfo.title || "").includes("Internal Procurement")) {
         tipoaprobador = "adquisiciones";

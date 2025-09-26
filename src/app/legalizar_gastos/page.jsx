@@ -162,6 +162,8 @@ export default function FacturasPage() {
         const fechaRegreso = new Date(visita.fecha_regreso);
         const fechaLimite = new Date(fechaRegreso);
         fechaLimite.setDate(fechaLimite.getDate() + 3);
+        // 🟢 Saber si ya pasó la fecha límite
+        const plazoVencido = new Date() > fechaLimite;
 
         const hoy = new Date();
         const vencido = hoy > fechaLimite;
@@ -179,16 +181,18 @@ export default function FacturasPage() {
               {formatFecha(visita.fecha_regreso)}
             </p>
 
-            {/* 🟢 Mostrar mensaje del plazo */}
-            <p className="text-sm text-green-600 mb-6">
-              ⚠️ Tienes plazo para subir las facturas hasta el{" "}
-              <strong>{formatFecha(fechaLimite)}</strong>
-            </p>
+            {/* 🟢 Mostrar mensaje solo si el plazo no está vencido */}
+            {!plazoVencido && (
+              <p className="text-sm text-green-600 mb-6">
+                ⚠️ Tienes plazo para subir las facturas hasta el{" "}
+                <strong>{formatFecha(fechaLimite)}</strong>
+              </p>
+            )}
 
             {vencido ? (
               // 🔹 Mensaje si ya venció el plazo
               <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
-                ⚠️ Ya venció el plazo para subir facturas. Tenías hasta:{" "}
+                ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
                 <b>{formatFecha(fechaLimite)}</b>
               </div>
             ) : (

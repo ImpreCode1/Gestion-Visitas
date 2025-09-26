@@ -90,6 +90,12 @@ const menusPorRol = {
         { label: "Mis visitas", href: "/mis_visitas", icon: <FaClipboardList /> },
       ],
     },
+    {
+      titulo: "Gastos",
+      items: [
+        { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
+      ],
+    },
   ],
   trainee: [
     {
