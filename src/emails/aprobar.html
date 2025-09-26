@@ -13,29 +13,63 @@
         background: white;
         padding: 20px;
         border-radius: 8px;
-        max-width: 500px;
+        max-width: 550px;
         margin: auto;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
       }
       h2 {
         color: #16a34a;
+        margin-top: 0;
       }
-      .info {
+      .comentarios {
+        margin: 20px 0;
+      }
+      .comentario {
         margin: 10px 0;
+        padding: 10px;
+        background: #e0f2fe;
+        border-left: 4px solid #0284c7;
+        border-radius: 6px;
+        font-style: italic;
+      }
+      .nota {
+        margin-top: 20px;
+        padding: 12px;
+        background: #fef9c3;
+        border-left: 4px solid #eab308;
+        border-radius: 6px;
       }
     </style>
   </head>
   <body>
     <div class="card">
-      <h2>Visita aprobada</h2>
+      <h2>✅ Visita aprobada</h2>
       <p>Hola <b>{{usuario}}</b>,</p>
       <p>
         Tu solicitud de visita para el cliente <b>{{cliente}}</b> ha sido
         <span style="color: #16a34a">aprobada</span>.
       </p>
-      <div class="info">
+      <div>
         <p><b>Motivo de la visita:</b> {{motivo}}</p>
         <p><b>Fechas:</b> {{fecha_ida}} - {{fecha_regreso}}</p>
+      </div>
+
+      {{#if comentarios.length}}
+      <div class="comentarios">
+        <b>Comentarios de los revisores:</b>
+        {{#each comentarios}}
+        <div class="comentario">
+          <b>{{this.rol}}:</b> "{{this.comentario}}"
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+
+      <div class="nota">
+        ⚠️ Desde este momento se encuentra habilitada la opción de subir las
+        facturas en la sección <b>Legalizar gastos</b>.  
+        Esta opción estará disponible únicamente hasta <b>3 días después</b> de
+        la fecha de regreso de tu visita (<b>{{fecha_regreso}}</b>).
       </div>
     </div>
   </body>

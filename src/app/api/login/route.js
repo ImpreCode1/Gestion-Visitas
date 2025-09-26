@@ -63,7 +63,7 @@ export async function POST(request) {
       displayName: "Usuario Prueba",
       mail: email,
       department: "Human Talent and Administrative",
-      title: "Trainee",
+      title: "Operating Assets Director",
       mobile: "3001234567",
     };
 
