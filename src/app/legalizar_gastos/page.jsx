@@ -127,7 +127,7 @@ export default function FacturasPage() {
     }
 
     setLoading(false);
-    alert("Factura actualizada ✅");
+    alert("Las facturas se han enviado correctamente");
   };
 
   const formatFecha = (fechaStr) => {
