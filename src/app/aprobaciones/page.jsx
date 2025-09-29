@@ -10,6 +10,39 @@ const ESTADOS = [
   { value: "rechazado", label: "Rechazado" },
 ];
 
+const mensajesPorRol = {
+  vicepresidencia: {
+    aprobar:
+      "Esta acción aprobará la visita y notificará a Compras Internas y Suministros Internos para que continúen con el proceso de autorización.",
+    rechazar:
+      "Esta acción rechazará la visita y se notificará al solicitante por correo electrónico. Por favor agrega el motivo.",
+  },
+  transporte: {
+    aprobar:
+      "Con esta autorización confirmas que se iniciará el proceso de gestión de plataformas de transporte. ",
+    rechazar:
+      "Rechazarás la solicitud de plataformas de transporte y se notificará al solicitante.",
+  },
+  tiquetes: {
+    aprobar:
+      "Con esta autorización confirmas que se iniciará el proceso de gestión de tiquetes aéreos y compras internas.",
+    rechazar:
+      "Rechazarás la solicitud de tiquetes aéreos y compras internas, se notificará al solicitante.",
+  },
+  "notas-credito": {
+    aprobar:
+      "Esta aprobación confirma que los gastos de la visita serán cubiertos mediante nota crédito por la fábrica.",
+    rechazar:
+      "Se rechazará la solicitud de realizar la visita y se notificará al solicitante.",
+  },
+  default: {
+    aprobar:
+      "Esta acción aprobará la visita y continuará el flujo de autorización.",
+    rechazar:
+      "Esta acción rechazará la visita y se notificará al solicitante por correo electrónico.",
+  },
+};
+
 // formatea fecha ISO
 function fmtDate(iso) {
   try {
@@ -184,6 +217,21 @@ export default function VerAprobaciones() {
     const comentarioRow = row?.comentario || "-";
     const visitaEstado = row?.visita?.estado || "-";
 
+    const getRolLegible = (rol) => {
+      switch (rol) {
+        case "transporte":
+          return "Suministros internos";
+        case "tiquetes":
+          return "Compras internas";
+        case "notas-credito":
+          return "Notas-Crédito";
+        case "vicepresidencia":
+          return "Vicepresidencia";
+        default:
+          return rol; // fallback por si llega otro valor
+      }
+    };
+
     return (
       // tarjeta en móvil, fila en desktop (grid)
       <div className="bg-white md:bg-transparent md:px-6 md:py-3 border-b md:border-0">
@@ -215,7 +263,7 @@ export default function VerAprobaciones() {
             {/* Rol */}
             <div className="md:col-span-2 text-sm mb-2 md:mb-0">
               <div className="text-gray-500">Rol</div>
-              <div className="font-medium text-gray-700">{rol}</div>
+              <div className="font-medium text-gray-700">{getRolLegible(rol)}</div>
             </div>
 
             {/* Fecha de creación */}
@@ -436,9 +484,11 @@ export default function VerAprobaciones() {
               )}
             </h2>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              {confirmType === "aprobar"
-                ? "Esta acción aprobará la visita y notificará a compras internas y suministros internos para continuar con el proceso."
-                : "Esta acción rechazará la visita y se notificará por correo electrónico al solicitante. Por favor agrega el motivo."}
+              {
+                (mensajesPorRol[currentRow?.rol] || mensajesPorRol.default)[
+                  confirmType
+                ]
+              }
             </p>
 
             <div className="mb-6">

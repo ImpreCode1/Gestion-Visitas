@@ -23,6 +23,8 @@ export default function AgendarVisitaPage() {
     ciudad_origen: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -33,6 +35,8 @@ export default function AgendarVisitaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
 
     if (formData.fecha_ida && formData.fecha_regreso) {
       const fechaIda = new Date(formData.fecha_ida);
@@ -382,9 +386,14 @@ export default function AgendarVisitaPage() {
           <div className="flex justify-center">
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg shadow-md transition-all w-full sm:w-auto"
+              disabled={loading}
+              className={`${
+                loading
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white font-medium px-8 py-3 rounded-lg shadow-md transition-all w-full sm:w-auto`}
             >
-              Agendar visita
+              {loading ? "Agendando..." : "Agendar visita"}
             </button>
           </div>
         </form>
