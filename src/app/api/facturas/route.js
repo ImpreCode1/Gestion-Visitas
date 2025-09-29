@@ -3,6 +3,7 @@ import { writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
+import getTemplate from "../../../lib/emails";
 
 const prisma = new PrismaClient();
 
@@ -27,7 +28,9 @@ export async function POST(req) {
     // 1️⃣ Buscar visita y validar fechas
     const visita = await prisma.visita.findUnique({
       where: { id: visitaId },
-      select: { fecha_regreso: true },
+      include: {
+        gerente: true,
+      },
     });
 
     if (!visita) {
@@ -93,6 +96,50 @@ export async function POST(req) {
       archivosGuardados.push(archivo);
     }
 
+    // 4️⃣ Buscar usuarios que contengan "internal procurement"
+    const usuarios = await prisma.user.findMany({
+      where: {
+        position: {
+          contains: "internal procurement",
+        },
+      },
+      select: { email: true, name: true },
+    });
+
+    const correos = usuarios.map((u) => u.email);
+
+    // Helper para enviar correos
+    const sendMail = async ({ to, subject, html }) => {
+      await fetch(`${req.nextUrl.origin}/api/send-mail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to, subject, html }),
+      });
+    };
+
+    if (correos.length > 0) {
+      const html = getTemplate("facturasSubidas", {
+        cliente: visita.cliente,
+        motivo: visita.motivo,
+        usuario: visita.gerente.name,
+        monto: factura.montoTotal || "N/A",
+        descripcion: factura.descripcion || "N/A",
+        fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
+        fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
+      });
+
+      await sendMail({
+        to: correos,
+        subject: `📑 Nuevas facturas subida para la visita a ${visita.cliente}`,
+        html,
+      });
+    }
+
+    await prisma.visita.update({
+      where:{ id: visitaId},
+      data: { estado: "completada"},
+    })
+    
     return NextResponse.json({
       success: true,
       factura,

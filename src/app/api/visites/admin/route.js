@@ -52,6 +52,7 @@ export async function GET() {
         : null,
       aprobaciones: v.aprobaciones,
       createdAt: v.createdAt,
+      gastos_viaje: v.gastos_viaje,
     }));
 
     return NextResponse.json({ ok: true, visitas: data });

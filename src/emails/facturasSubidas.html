@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9fafb;
+        margin: 0;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 550px;
+        margin: auto;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #0284c7;
+        margin-top: 0;
+      }
+      .detalle {
+        margin: 15px 0;
+        padding: 12px;
+        background: #f1f5f9;
+        border-left: 4px solid #0284c7;
+        border-radius: 6px;
+      }
+      .nota {
+        margin-top: 20px;
+        padding: 12px;
+        background: #dcfce7;
+        border-left: 4px solid #16a34a;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>📑 Nuevas facturas subidas</h2>
+      <p>Hola equipo de <b>Internal Procurement</b>,</p>
+      <p>
+        El usuario <b>{{usuario}}</b> ha subido facturas para la visita al cliente 
+        <b>{{cliente}}</b>.
+      </p>
+
+      <div class="detalle">
+        <p><b>Motivo de la visita:</b> {{motivo}}</p>
+        <p><b>Fechas:</b> {{fecha_ida}} - {{fecha_regreso}}</p>
+        <p><b>Monto total reportado:</b> {{monto}}</p>
+        <p><b>Descripción:</b> {{descripcion}}</p>
+
+      </div>
+
+      <div class="nota">
+        ⚠️ Por favor revisa estas facturas en la plataforma de
+        <b>Gestión de Visitas</b> para continuar con el proceso de legalización.
+      </div>
+    </div>
+  </body>
+</html>

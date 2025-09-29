@@ -78,9 +78,9 @@ const menusPorRol = {
   ],
   aprobador: [
     {
-      titulo: "Aprobaciones",
+      titulo: "Autorizaciones",
       items: [
-        { label: "Aprobar visitas", href: "/aprobaciones", icon: <FaCheckCircle /> },
+        { label: "Autorizar", href: "/aprobaciones", icon: <FaCheckCircle /> },
       ],
     },
     {
@@ -94,6 +94,12 @@ const menusPorRol = {
       titulo: "Gastos",
       items: [
         { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
+      ],
+    },
+    {
+      titulo: "Historial",
+      items: [
+        { label: "Visitas", href: "/admin/visitas", icon: <FaAutoprefixer /> },
       ],
     },
   ],

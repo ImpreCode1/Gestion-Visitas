@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, XCircle, CheckCircle2, Plane, User, X, Search } from "lucide-react";
+import {
+  FileText,
+  XCircle,
+  CheckCircle2,
+  Plane,
+  User,
+  X,
+  Search,
+} from "lucide-react";
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState([]);
@@ -16,6 +24,13 @@ export default function VisitasPage() {
   const [search, setSearch] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("todos");
   const [soloAvion, setSoloAvion] = useState(false);
+
+  const rolLabels = {
+    transporte: "Suministros internos",
+    tiquetes: "Compras internas",
+    vicepresidencia: "Vicepresidencia",
+    notas_credito: "Notas-Crédito",
+  };
 
   // cargar visitas
   useEffect(() => {
@@ -108,6 +123,7 @@ export default function VisitasPage() {
             <thead className="bg-blue-50">
               <tr>
                 <th className="p-3 text-sm font-semibold text-gray-700">ID</th>
+                <th className="p-3 text-sm font-semibold text-gray-700">GV</th>
                 <th className="p-3 text-sm font-semibold text-gray-700">
                   Gerente
                 </th>
@@ -147,6 +163,11 @@ export default function VisitasPage() {
                     }`}
                   >
                     <td className="p-3">{visita.id}</td>
+
+                    {/* GV */}
+                    <td className="p-3 text-sm text-gray-700">
+                      {visita.gastos_viaje ? visita.gastos_viaje : "-"}
+                    </td>
 
                     {/* Gerente */}
                     <td className="p-3">
@@ -197,9 +218,6 @@ export default function VisitasPage() {
                       >
                         {visita.estado}
                       </span>
-                      {visita.requiereAvion && (
-                        <Plane className="w-4 h-4 text-blue-500 inline ml-1" />
-                      )}
                     </td>
 
                     {/* Facturas */}
@@ -208,7 +226,11 @@ export default function VisitasPage() {
                         <div className="flex flex-col items-center">
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
                           <span className="text-xs text-gray-500">
-                            ${visita.facturas.montoTotal?.toFixed(2) || 0}
+                            $
+                            {new Intl.NumberFormat("es-CO", {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(visita.facturas.montoTotal || 0)}
                           </span>
                         </div>
                       ) : (
@@ -221,7 +243,8 @@ export default function VisitasPage() {
                       <div className="flex flex-col gap-1 text-xs">
                         {visita.aprobaciones.map((ap) => (
                           <div key={ap.id}>
-                            {ap.rol}:{" "}
+                            {/* si el rol existe en el mapa, lo muestra; sino, muestra el original */}
+                            {rolLabels[ap.rol] || ap.rol}:{" "}
                             <span
                               className={`font-semibold ${
                                 ap.estado === "aprobado"
@@ -237,7 +260,6 @@ export default function VisitasPage() {
                         ))}
                       </div>
                     </td>
-
                     {/* Acciones */}
                     <td className="p-3 flex flex-col gap-2 text-center">
                       <button
@@ -288,6 +310,65 @@ export default function VisitasPage() {
             <h2 className="text-xl font-bold mb-4 text-blue-700">
               Detalles de la Visita {selectedVisita.id}
             </h2>
+
+            {/* 🔹 Campo editable GV */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                GV asociado
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={selectedVisita.gastos_viaje || ""}
+                  onChange={(e) =>
+                    setSelectedVisita({
+                      ...selectedVisita,
+                      gastos_viaje: e.target.value,
+                    })
+                  }
+                  placeholder="Ej: GV12345"
+                  className="border border-gray-300 p-2 rounded-md flex-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(
+                        `/api/visites/${selectedVisita.id}/gv`,
+                        {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            gastos_viaje: selectedVisita.gastos_viaje,
+                          }),
+                        }
+                      );
+
+                      if (!res.ok)
+                        throw new Error("Error al actualizar gastos_viaje");
+
+                      const data = await res.json();
+
+                      setSelectedVisita(data.visita);
+                      setVisitas((prev) =>
+                        prev.map((v) =>
+                          v.id === data.visita.id ? data.visita : v
+                        )
+                      );
+
+                      alert("Gastos de viaje actualizado correctamente ✅");
+                    } catch (err) {
+                      console.error(err);
+                      alert("No se pudo actualizar el gasto de viaje ❌");
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+
             <p>
               <b>Cliente:</b> {selectedVisita.cliente} (
               {selectedVisita.clienteCodigo})
@@ -306,13 +387,42 @@ export default function VisitasPage() {
             <p>
               <b>Estado:</b> {selectedVisita.estado}
             </p>
-            <div className="mt-4">
-              <h3 className="font-semibold">Aprobaciones:</h3>
-              {selectedVisita.aprobaciones.map((ap) => (
-                <div key={ap.id}>
-                  {ap.rol}: <span className="font-medium">{ap.estado}</span>
-                </div>
-              ))}
+
+            {/* 🟦 Aprobaciones */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Aprobaciones
+              </h3>
+              <div className="space-y-3">
+                {selectedVisita.aprobaciones.map((ap) => (
+                  <div
+                    key={ap.id}
+                    className="p-3 border rounded-lg bg-gray-50 shadow-sm"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-blue-700">
+                        {rolLabels[ap.rol] || ap.rol}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-md font-semibold ${
+                          ap.estado === "aprobado"
+                            ? "bg-green-100 text-green-700"
+                            : ap.estado === "rechazado"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {ap.estado}
+                      </span>
+                    </div>
+                    {ap.comentario && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        <b>Comentario:</b> {ap.comentario}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -336,9 +446,12 @@ export default function VisitasPage() {
             </p>
             <p>
               <b>Monto Total:</b> $
-              {selectedVisita.facturas.montoTotal?.toFixed(2)}
+              {new Intl.NumberFormat("es-CO", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(selectedVisita.facturas.montoTotal || 0)}
             </p>
-            <div className="mt-4">
+            <div clssName="mt-4">
               <h3 className="font-semibold">Archivos:</h3>
               <ul className="list-disc ml-6">
                 {selectedVisita.facturas.archivos.map((f) => (

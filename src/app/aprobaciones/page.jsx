@@ -437,7 +437,7 @@ export default function VerAprobaciones() {
             </h2>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
               {confirmType === "aprobar"
-                ? "Esta acción aprobará la visita y notificará a compras internas y adquisiciones internas para continuar con el proceso."
+                ? "Esta acción aprobará la visita y notificará a compras internas y suministros internos para continuar con el proceso."
                 : "Esta acción rechazará la visita y se notificará por correo electrónico al solicitante. Por favor agrega el motivo."}
             </p>
 

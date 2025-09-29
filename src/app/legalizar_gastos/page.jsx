@@ -13,7 +13,13 @@ export default function FacturasPage() {
   useEffect(() => {
     fetch("/api/visites")
       .then((res) => res.json())
-      .then((data) => setVisitas(data.filter((v) => v.estado === "aprobada")));
+      .then((data) =>
+        setVisitas(
+          data.filter(
+            (v) => v.estado === "aprobada" || v.estado === "completada"
+          )
+        )
+      );
   }, []);
 
   // 🔹 Cargar facturas de cada visita
@@ -191,10 +197,20 @@ export default function FacturasPage() {
 
             {vencido ? (
               // 🔹 Mensaje si ya venció el plazo
-              <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
-                ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
-                <b>{formatFecha(fechaLimite)}</b>
-              </div>
+              visita.estado === "completada" ? (
+                // 🔹 Mensaje si ya subió y se completó
+                <div className="p-4 bg-green-100 border border-green-300 text-green-700 rounded-md">
+                  ✅ Ya has subido las facturas y el plazo para enviar más
+                  documentos ha pasado (hasta el{" "}
+                  <b>{formatFecha(fechaLimite)}</b>).
+                </div>
+              ) : (
+                // 🔹 Mensaje si venció pero NO se completó
+                <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
+                  ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
+                  <b>{formatFecha(fechaLimite)}</b>.
+                </div>
+              )
             ) : (
               <form
                 onSubmit={(e) => handleSubmit(e, visita.id)}
@@ -332,7 +348,7 @@ export default function FacturasPage() {
                     placeholder="Ej: 250000"
                     value={factura.montoTotal || ""}
                     onChange={(e) =>
-                      handleChange(visita.id, "montoTotal", e.target.value)
+                      handleChange(visita.id, "montoTotal", parseFloat(e.target.value) || 0)
                     }
                     className="border border-gray-300 p-3 w-full rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -344,7 +360,9 @@ export default function FacturasPage() {
                   disabled={loading}
                   className="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  {loading ? "Guardando..." : "Guardar Facturas"}
+                  {loading
+                    ? "Guardando..."
+                    : "Guardar y enviar facturas para su legalización"}
                 </button>
               </form>
             )}
