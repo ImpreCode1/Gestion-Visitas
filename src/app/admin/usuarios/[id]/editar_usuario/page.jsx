@@ -26,7 +26,7 @@ export default function EditarUsuario() {
   const rolesDisponibles = [
     { value: "gerenteProducto", label: "Gerente de Producto, Team Leader o Director" },
     { value: "admin", label: "Administrador" },
-    { value: "aprobador", label: "Aprobador" },
+    { value: "aprobador", label: "Internos" },
     { value: "vicepresidente", label: "Vicepresidente"},
     { value: "notas_credito", label: "Notas-Crédito"},
     { value: "trainee", label: "Trainee" },
@@ -203,7 +203,7 @@ export default function EditarUsuario() {
           {formData.role === "aprobador" && (
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Tipo de Aprobador
+                Tipo
               </label>
               <select
                 name="tipoaprobador"

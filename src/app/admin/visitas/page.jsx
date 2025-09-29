@@ -23,7 +23,6 @@ export default function VisitasPage() {
   // 🔎 filtros
   const [search, setSearch] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("todos");
-  const [soloAvion, setSoloAvion] = useState(false);
 
   const rolLabels = {
     transporte: "Suministros internos",
@@ -64,9 +63,7 @@ export default function VisitasPage() {
     const matchesEstado =
       estadoFilter === "todos" ? true : v.estado === estadoFilter;
 
-    const matchesAvion = soloAvion ? v.requiereAvion : true;
-
-    return matchesSearch && matchesEstado && matchesAvion;
+    return matchesSearch && matchesEstado;
   });
 
   return (
@@ -103,17 +100,6 @@ export default function VisitasPage() {
               <option value="aprobada">Aprobada</option>
               <option value="rechazada">Rechazada</option>
             </select>
-
-            {/* Avión */}
-            <label className="flex items-center gap-1 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={soloAvion}
-                onChange={(e) => setSoloAvion(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              Requiere avión
-            </label>
           </div>
         </div>
 
@@ -451,7 +437,7 @@ export default function VisitasPage() {
                 maximumFractionDigits: 0,
               }).format(selectedVisita.facturas.montoTotal || 0)}
             </p>
-            <div clssName="mt-4">
+            <div className="mt-4">
               <h3 className="font-semibold">Archivos:</h3>
               <ul className="list-disc ml-6">
                 {selectedVisita.facturas.archivos.map((f) => (
