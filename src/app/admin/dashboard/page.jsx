@@ -148,11 +148,19 @@ export default function Dashboard() {
                   outerRadius={100}
                   label
                 >
-                  {estadoVisitas.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {estadoVisitas.map((entry, index) => {
+                    let fill = "#9CA3AF"; // gris por defecto
+                    if (entry.estado === "pendiente") fill = "#F59E0B"; // amarillo
+                    if (entry.estado === "aprobada") fill = "#16A34A"; // verde
+                    if (entry.estado === "rechazada") fill = "#DC2626"; // rojo
+                    if (entry.estado === "completada") fill = "#2563EB"; // azul
+
+                    return <Cell key={index} fill={fill} />;
+                  })}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value, name) => [`${value}`, `Estado: ${name}`]}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
