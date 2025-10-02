@@ -77,7 +77,7 @@ export default function Dashboard() {
         <KPI
           icon={TrendingUp}
           title="Promedio por Visita"
-          description="Costo promedio asociado a cada visita registrada."
+          description="Costo promedio de las facturas asociado a cada visita registrada."
           value={`$${costos.promedio.toFixed(2)}`}
           color="from-emerald-600 to-emerald-400"
         />
