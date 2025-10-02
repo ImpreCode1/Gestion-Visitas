@@ -18,7 +18,12 @@
     "noEmit": true,
 
     /* === Next.js plugin === */
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [
     "next-env.d.ts",

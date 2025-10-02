@@ -15,7 +15,7 @@ import {
 } from "react-icons/fa";
 import logo from "../public/logo.png";
 import BotonRojo from "./boton_rojo";
-import { Menu, ChevronLeft } from "lucide-react";
+import { Menu, ChevronLeft, BarChart3 } from "lucide-react";
 
 const menusPorRol = {
   gerenteProducto: [
@@ -122,6 +122,7 @@ const menusPorRol = {
       items: [
         { label: "Usuarios", href: "/admin/usuarios", icon: <FaUserShield /> },
         { label: "Visitas", href: "/admin/visitas", icon: <FaAutoprefixer /> },
+        { label: "Indicadores", href: "/admin/dashboard", icon: <BarChart3 /> },
       ],
     },
     {
