@@ -1,6 +1,17 @@
 "use client";
 import { useState } from "react";
 
+function getLocalDateTimeNow() {
+  const now = new Date();
+  now.setSeconds(0, 0); // limpiar segundos/ms
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function AgendarVisitaPage() {
   const [formData, setFormData] = useState({
     clienteCodigo: "",
@@ -37,6 +48,29 @@ export default function AgendarVisitaPage() {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
+
+    const hoy = new Date();
+    hoy.setSeconds(0, 0); // limpiar segundos/ms para comparar mejor
+
+    if (formData.fecha_ida) {
+      const fechaIda = new Date(formData.fecha_ida);
+      if (fechaIda < hoy) {
+        alert("❌ La fecha de ida no puede ser anterior al día actual");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (formData.fecha_ida && formData.fecha_regreso) {
+      const fechaIda = new Date(formData.fecha_ida);
+      const fechaRegreso = new Date(formData.fecha_regreso);
+
+      if (fechaRegreso < fechaIda) {
+        alert("❌ La fecha de regreso no puede ser anterior a la fecha de ida");
+        setLoading(false);
+        return;
+      }
+    }
 
     if (formData.fecha_ida && formData.fecha_regreso) {
       const fechaIda = new Date(formData.fecha_ida);
@@ -305,6 +339,7 @@ export default function AgendarVisitaPage() {
                   name="fecha_ida"
                   value={formData.fecha_ida}
                   onChange={handleChange}
+                  min={getLocalDateTimeNow()} // ahora sí funciona en local
                   className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
                   required
                 />
@@ -322,6 +357,7 @@ export default function AgendarVisitaPage() {
                   name="fecha_regreso"
                   value={formData.fecha_regreso}
                   onChange={handleChange}
+                  min={formData.fecha_ida || getLocalDateTimeNow()} // mínimo la fecha de ida
                   className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
                   required
                 />
