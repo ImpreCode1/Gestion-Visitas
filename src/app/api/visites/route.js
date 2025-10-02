@@ -34,7 +34,7 @@ export async function GET(request) {
     }
 
     // 🔹 Consultar visitas asociadas al gerente logueado
-    const visitas = await prisma.visita.findMany({
+    let visitas = await prisma.visita.findMany({
       where: { gerenteId: usuario.id },
       select: {
         id: true,
@@ -72,6 +72,36 @@ export async function GET(request) {
       },
       orderBy: { fecha_ida: "desc" },
     });
+
+    // 🔹 Normalizar fechas a medianoche
+    const normalizarFecha = (fecha) => {
+      const f = new Date(fecha);
+      f.setHours(0, 0, 0, 0);
+      return f;
+    };
+
+    const hoy = normalizarFecha(new Date());
+
+    // 🔹 Verificar y actualizar visitas vencidas
+    for (const visita of visitas) {
+      const fechaRegreso = normalizarFecha(visita.fecha_regreso);
+      const fechaLimite = new Date(fechaRegreso);
+      fechaLimite.setDate(fechaLimite.getDate() + 3);
+
+      const noSubioFacturas = !visita.facturas || visita.facturas.length === 0;
+      const yaPasoPlazo = hoy > fechaLimite;
+
+      if (yaPasoPlazo && noSubioFacturas && visita.estado !== "completada") {
+        // 🔹 Actualizar en BD
+        await prisma.visita.update({
+          where: { id: visita.id },
+          data: { estado: "completada" },
+        });
+
+        // 🔹 Reflejar el cambio en el objeto que devolveremos
+        visita.estado = "completada";
+      }
+    }
 
     return NextResponse.json(visitas, { status: 200 });
   } catch (error) {

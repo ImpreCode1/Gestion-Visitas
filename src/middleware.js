@@ -6,21 +6,17 @@ const encoder = new TextEncoder();
 const accessSecret = encoder.encode(process.env.JWT_SECRET);
 const refreshSecret = encoder.encode(process.env.JWT_REFRESH_SECRET);
 
-const ACCESS_TOKEN_EXP = 60 * 15; // segundos para probar rápido
+// Tiempo de expiración del access token (15 minutos recomendado)
+const ACCESS_TOKEN_EXP = 60 * 15; // en segundos
 
 function setAccessCookie(res, token) {
   res.cookies.set("token", token, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production", // seguro en prod
     path: "/",
     maxAge: ACCESS_TOKEN_EXP,
     sameSite: "lax",
   });
-}
-
-function clearAuthCookies(res) {
-  res.cookies.delete("token");
-  res.cookies.delete("refreshToken");
 }
 
 async function tryVerifyAccess(token) {
@@ -32,7 +28,17 @@ async function tryVerifyRefresh(refreshToken) {
 }
 
 async function mintAccessFromRefreshPayload(payload) {
-  return new SignJWT(payload)
+  // 👇 Copiamos los mismos datos que pusimos en el refresh token
+  const newPayload = {
+    email: payload.email,
+    displayName: payload.displayName,
+    department: payload.department,
+    title: payload.title,
+    role: payload.role,
+    typerole: payload.typerole,
+  };
+
+  return new SignJWT(newPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${ACCESS_TOKEN_EXP}s`)
@@ -47,10 +53,8 @@ export async function middleware(request) {
 
   // --- /login y /: no dejar acceder si ya hay token ---
   if (pathname === "/login" || pathname === "/") {
-    // Si no hay tokens, permitir acceso
     if (!token && !refreshToken) return NextResponse.next();
 
-    // Si access token válido, redirigir a /dashboard
     if (token) {
       try {
         await tryVerifyAccess(token);
@@ -58,12 +62,13 @@ export async function middleware(request) {
       } catch {}
     }
 
-    // Si refresh token válido, renovar access token y redirigir a /dashboard
     if (refreshToken) {
       try {
         const { payload } = await tryVerifyRefresh(refreshToken);
         const newAccess = await mintAccessFromRefreshPayload(payload);
-        const res = NextResponse.redirect(new URL("/agendar_visita", request.url));
+        const res = NextResponse.redirect(
+          new URL("/agendar_visita", request.url)
+        );
         setAccessCookie(res, newAccess);
         return res;
       } catch {
@@ -76,7 +81,8 @@ export async function middleware(request) {
 
   // --- Rutas protegidas ---
   if (!token) {
-    if (!refreshToken) return NextResponse.redirect(new URL("/login", request.url));
+    if (!refreshToken)
+      return NextResponse.redirect(new URL("/login", request.url));
 
     try {
       const { payload } = await tryVerifyRefresh(refreshToken);

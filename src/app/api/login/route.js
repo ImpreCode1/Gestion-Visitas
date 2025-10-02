@@ -181,7 +181,7 @@ export async function POST(request) {
       typerole: tipoaprobador || ""
     },
     JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1d" }
   );
 
   const response = NextResponse.json({}, { status: 200 });
@@ -191,7 +191,7 @@ export async function POST(request) {
     value: accesstoken,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 15,
+    maxAge: 60 * 60 * 15,
     path: "/",
   });
 
@@ -200,7 +200,7 @@ export async function POST(request) {
     value: refreshtoken,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24,
     path: "/",
   });
 

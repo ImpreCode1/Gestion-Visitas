@@ -58,18 +58,17 @@
       <div class="comentarios">
         <b>Comentarios de los revisores:</b>
         {{#each comentarios}}
-        <div class="comentario">
-          <b>{{this.rol}}:</b> "{{this.comentario}}"
-        </div>
+        <div class="comentario"><b>{{this.rol}}:</b> "{{this.comentario}}"</div>
         {{/each}}
       </div>
       {{/if}}
 
       <div class="nota">
-        ⚠️ Desde este momento se encuentra habilitada la opción de subir las
-        facturas en la sección <b>Legalizar gastos</b>.  
-        Esta opción estará disponible únicamente hasta <b>3 días después</b> de
-        la fecha de regreso de tu visita (<b>{{fecha_regreso}}</b>).
+        ⚠️ A partir de la fecha de regreso de tu visita se habilitará la opción
+        para subir las facturas en la sección <b>Legalizar gastos</b>. Ten en
+        cuenta que esta opción estará disponible únicamente hasta
+        <b>3 días después</b>
+        de la fecha de regreso (<b>{{fecha_regreso}}</b>).
       </div>
     </div>
   </body>

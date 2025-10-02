@@ -138,12 +138,6 @@ export default function FacturasPage() {
     }).format(fecha);
   };
 
-  const isVencida = (fecha_regreso) => {
-    const limite = new Date(fecha_regreso);
-    limite.setDate(limite.getDate() + 3);
-    return new Date() > limite;
-  };
-
   return (
     <div className="p-6 max-w-5xl mx-auto bg-white min-h-screen">
       <h1 className="text-4xl font-bold text-blue-700 mb-10 text-center">
@@ -164,15 +158,18 @@ export default function FacturasPage() {
         };
         const nuevos = newFiles[visita.id] || [];
 
-        // 🔹 Calcular si ya pasó la fecha límite
+        // 🔹 Calcular fechas
         const fechaRegreso = new Date(visita.fecha_regreso);
         const fechaLimite = new Date(fechaRegreso);
         fechaLimite.setDate(fechaLimite.getDate() + 3);
-        // 🟢 Saber si ya pasó la fecha límite
-        const plazoVencido = new Date() > fechaLimite;
 
         const hoy = new Date();
+
+        // 🟢 Estados posibles
+        const dentroDelPlazo = hoy >= fechaRegreso && hoy <= fechaLimite;
         const vencido = hoy > fechaLimite;
+        const aunNoHabilitado = hoy < fechaRegreso;
+
         return (
           <div
             key={visita.id}
@@ -187,184 +184,190 @@ export default function FacturasPage() {
               {formatFecha(visita.fecha_regreso)}
             </p>
 
-            {/* 🟢 Mostrar mensaje solo si el plazo no está vencido */}
-            {!plazoVencido && (
-              <p className="text-sm text-green-600 mb-6">
-                ⚠️ Tienes plazo para subir las facturas hasta el{" "}
-                <strong>{formatFecha(fechaLimite)}</strong>
-              </p>
+            {/* Mensaje antes de habilitar */}
+            {aunNoHabilitado && (
+              <div className="p-4 bg-yellow-100 border border-yellow-300 text-yellow-700 rounded-md">
+                ⚠️ La opción de legalizar gastos estará disponible a partir del{" "}
+                <b>{formatFecha(fechaRegreso)}</b>.
+              </div>
             )}
 
-            {vencido ? (
-              // 🔹 Mensaje si ya venció el plazo
-              visita.estado === "completada" ? (
-                // 🔹 Mensaje si ya subió y se completó
-                <div className="p-4 bg-green-100 border border-green-300 text-green-700 rounded-md">
-                  ✅ Ya has subido las facturas y el plazo para enviar más
-                  documentos ha pasado (hasta el{" "}
-                  <b>{formatFecha(fechaLimite)}</b>).
-                </div>
-              ) : (
-                // 🔹 Mensaje si venció pero NO se completó
-                <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
-                  ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
-                  <b>{formatFecha(fechaLimite)}</b>.
-                </div>
-              )
-            ) : (
-              <form
-                onSubmit={(e) => handleSubmit(e, visita.id)}
-                className="space-y-6"
-              >
-                {/* Archivos existentes */}
-                {factura.archivos?.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">
-                      Archivos existentes
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {factura.archivos.map((archivo) => {
-                        const esImagen = /\.(jpg|jpeg|png|gif)$/i.test(
-                          archivo.url
-                        );
-                        return (
-                          <div
-                            key={archivo.id}
-                            className="relative flex flex-col items-center bg-white border rounded-lg p-2 shadow-sm"
-                          >
-                            {esImagen ? (
-                              <img
-                                src={archivo.url}
-                                alt={archivo.nombre}
-                                className="w-20 h-20 object-cover mb-2 rounded"
-                              />
-                            ) : (
-                              <FileText className="w-10 h-10 text-gray-600 mb-2" />
-                            )}
-                            <a
-                              href={archivo.url}
-                              target="_blank"
-                              className="text-xs text-blue-600 truncate w-full text-center"
-                            >
-                              {archivo.nombre}
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                deleteArchivo(visita.id, archivo.id)
-                              }
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+            {/* Mensaje cuando venció */}
+            {vencido && (
+              <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
+                ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
+                <b>{formatFecha(fechaLimite)}</b>.
+              </div>
+            )}
 
-                {/* Archivos nuevos */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subir nuevos archivos
-                  </label>
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
-                    <Upload className="w-8 h-8 text-blue-500 mb-2" />
-                    <span className="text-gray-600 text-sm">
-                      Haz clic para adjuntar archivos
-                    </span>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileChange(visita.id, e)}
-                      className="hidden"
-                    />
-                  </label>
+            {/* Formulario dentro del plazo */}
+            {dentroDelPlazo && (
+              <>
+                <p className="text-sm text-green-600 mb-6">
+                  ✅ Puedes subir tus facturas hasta el{" "}
+                  <strong>{formatFecha(fechaLimite)}</strong>.
+                </p>
 
-                  {nuevos.length > 0 && (
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {nuevos.map((file, index) => {
-                        const esImagen = /\.(jpg|jpeg|png|gif)$/i.test(
-                          file.name
-                        );
-                        const previewUrl = esImagen
-                          ? URL.createObjectURL(file)
-                          : null;
-                        return (
-                          <div
-                            key={index}
-                            className="relative flex flex-col items-center bg-white border rounded-lg p-2 shadow-sm"
-                          >
-                            {esImagen ? (
-                              <img
-                                src={previewUrl}
-                                alt={file.name}
-                                className="w-20 h-20 object-cover mb-2 rounded"
-                              />
-                            ) : (
-                              <FileText className="w-10 h-10 text-gray-600 mb-2" />
-                            )}
-                            <span className="text-xs text-gray-700 truncate w-full text-center">
-                              {file.name}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeNewFile(visita.id, index)}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                <form
+                  onSubmit={(e) => handleSubmit(e, visita.id)}
+                  className="space-y-6"
+                >
+                  {/* Archivos existentes */}
+                  {factura.archivos?.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">
+                        Archivos existentes
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {factura.archivos.map((archivo) => {
+                          const esImagen = /\.(jpg|jpeg|png|gif)$/i.test(
+                            archivo.url
+                          );
+                          return (
+                            <div
+                              key={archivo.id}
+                              className="relative flex flex-col items-center bg-white border rounded-lg p-2 shadow-sm"
                             >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
+                              {esImagen ? (
+                                <img
+                                  src={archivo.url}
+                                  alt={archivo.nombre}
+                                  className="w-20 h-20 object-cover mb-2 rounded"
+                                />
+                              ) : (
+                                <FileText className="w-10 h-10 text-gray-600 mb-2" />
+                              )}
+                              <a
+                                href={archivo.url}
+                                target="_blank"
+                                className="text-xs text-blue-600 truncate w-full text-center"
+                              >
+                                {archivo.nombre}
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  deleteArchivo(visita.id, archivo.id)
+                                }
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-                </div>
 
-                {/* Descripción */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Factura por servicios"
-                    value={factura.descripcion || ""}
-                    onChange={(e) =>
-                      handleChange(visita.id, "descripcion", e.target.value)
-                    }
-                    className="border border-gray-300 p-3 w-full rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                  {/* Archivos nuevos */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Subir nuevos archivos
+                    </label>
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
+                      <Upload className="w-8 h-8 text-blue-500 mb-2" />
+                      <span className="text-gray-600 text-sm">
+                        Haz clic para adjuntar archivos
+                      </span>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => handleFileChange(visita.id, e)}
+                        className="hidden"
+                      />
+                    </label>
 
-                {/* Monto */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Monto total de las facturas
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Ej: 250000"
-                    value={factura.montoTotal || ""}
-                    onChange={(e) =>
-                      handleChange(visita.id, "montoTotal", parseFloat(e.target.value) || 0)
-                    }
-                    className="border border-gray-300 p-3 w-full rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                    {nuevos.length > 0 && (
+                      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {nuevos.map((file, index) => {
+                          const esImagen = /\.(jpg|jpeg|png|gif)$/i.test(
+                            file.name
+                          );
+                          const previewUrl = esImagen
+                            ? URL.createObjectURL(file)
+                            : null;
+                          return (
+                            <div
+                              key={index}
+                              className="relative flex flex-col items-center bg-white border rounded-lg p-2 shadow-sm"
+                            >
+                              {esImagen ? (
+                                <img
+                                  src={previewUrl}
+                                  alt={file.name}
+                                  className="w-20 h-20 object-cover mb-2 rounded"
+                                />
+                              ) : (
+                                <FileText className="w-10 h-10 text-gray-600 mb-2" />
+                              )}
+                              <span className="text-xs text-gray-700 truncate w-full text-center">
+                                {file.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeNewFile(visita.id, index)
+                                }
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
-                {/* Botón */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  {loading
-                    ? "Guardando..."
-                    : "Guardar y enviar facturas para su legalización"}
-                </button>
-              </form>
+                  {/* Descripción */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Descripción
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Factura por servicios"
+                      value={factura.descripcion || ""}
+                      onChange={(e) =>
+                        handleChange(visita.id, "descripcion", e.target.value)
+                      }
+                      className="border border-gray-300 p-3 w-full rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Monto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Monto total de las facturas
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Ej: 250000"
+                      value={factura.montoTotal || ""}
+                      onChange={(e) =>
+                        handleChange(
+                          visita.id,
+                          "montoTotal",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      className="border border-gray-300 p-3 w-full rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Botón */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Guardando..."
+                      : "Guardar y enviar facturas para su legalización"}
+                  </button>
+                </form>
+              </>
             )}
           </div>
         );
