@@ -52,7 +52,8 @@
         <b>Requiere tiquetes aéreos</b>
       </td>
       <td style="border: 1px solid #ddd; padding: 8px">
-        {{#if requiereAvion}}Sí{{else}}No{{/if}}
+        {{#requiereAvion}}Sí{{/requiereAvion}}
+        {{^requiereAvion}}No{{/requiereAvion}}
       </td>
     </tr>
     <tr>
@@ -64,7 +65,8 @@
         <b>Fondos de Fábrica</b>
       </td>
       <td style="border: 1px solid #ddd; padding: 8px">
-        {{#if fondos_fabrica}}Sí{{else}}No{{/if}}
+        {{#fondos_fabrica}}Sí{{/fondos_fabrica}}
+        {{^fondos_fabrica}}No{{/fondos_fabrica}}
       </td>
     </tr>
   </table>

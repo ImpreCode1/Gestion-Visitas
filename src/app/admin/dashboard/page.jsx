@@ -11,16 +11,14 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Line,
-  LineChart,
 } from "recharts";
-import { DollarSign, Percent, TrendingUp } from "lucide-react";
+import { DollarSign, Percent, TrendingUp, Calendar } from "lucide-react";
 
 export default function Dashboard() {
   const [visitasMensuales, setVisitasMensuales] = useState([]);
   const [estadoVisitas, setEstadoVisitas] = useState([]);
   const [costos, setCostos] = useState({ total: 0, promedio: 0 });
-  const [tiempoAprobacion, setTiempoAprobacion] = useState([]);
+  const [duracionPromedio, setDuracionPromedio] = useState({ promedio: 0 });
   const [legalizaciones, setLegalizaciones] = useState({ porcentaje: 0 });
   const [clientesTop, setClientesTop] = useState([]);
 
@@ -28,31 +26,27 @@ export default function Dashboard() {
     fetch("/api/reports/visitas-mensuales")
       .then((r) => r.json())
       .then(setVisitasMensuales);
+
     fetch("/api/reports/estado-visitas")
       .then((r) => r.json())
       .then(setEstadoVisitas);
+
     fetch("/api/reports/costos-totales")
       .then((r) => r.json())
       .then(setCostos);
-    fetch("/api/reports/tiempo-aprobacion")
+
+    fetch("/api/reports/duracion-promedio")
       .then((r) => r.json())
-      .then(setTiempoAprobacion);
+      .then(setDuracionPromedio);
+
     fetch("/api/reports/legalizaciones-tiempo")
       .then((r) => r.json())
       .then(setLegalizaciones);
+
     fetch("/api/reports/clientes-top")
       .then((r) => r.json())
       .then(setClientesTop);
   }, []);
-
-  const COLORS = [
-    "#2563EB",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#EC4899",
-  ];
 
   const KPI = ({ icon: Icon, title, description, value, color }) => (
     <Card className={`bg-gradient-to-br ${color} text-white shadow-xl`}>
@@ -72,10 +66,10 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-8">
       {/* KPIs principales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <KPI
           icon={DollarSign}
-          title="Facturas Totales"
+          title="Gasto Total"
           description="Suma de todos los gastos legalizados en el periodo."
           value={`$${costos.total.toFixed(2)}`}
           color="from-blue-600 to-blue-400"
@@ -93,6 +87,13 @@ export default function Dashboard() {
           description="Porcentaje de facturas subidas en los 3 días posteriores al viaje."
           value={`${legalizaciones.porcentaje.toFixed(1)}%`}
           color="from-pink-600 to-pink-400"
+        />
+        <KPI
+          icon={Calendar}
+          title="Duración Promedio"
+          description="Tiempo promedio de cada visita registrada."
+          value={`${duracionPromedio.promedio.toFixed(1)} días`}
+          color="from-purple-600 to-purple-400"
         />
       </div>
 
@@ -167,31 +168,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tiempo de aprobación */}
-        <Card className="shadow-lg">
-          <CardContent>
-            <h2 className="text-xl font-bold">Tiempo Promedio de Aprobación</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Días promedio que tarda cada rol en autorizar una solicitud.
-            </p>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={tiempoAprobacion}>
-                <XAxis dataKey="rol" interval={0} tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v) => `${v.toFixed(1)}d`} />
-                <Tooltip formatter={(v) => `${v.toFixed(2)} días`} />
-                <Line
-                  type="monotone"
-                  dataKey="promedioDias"
-                  stroke="#10B981"
-                  strokeWidth={3}
-                  dot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Clientes top */}
         <Card className="shadow-lg">
           <CardContent className="flex flex-col h-full">
@@ -211,7 +188,7 @@ export default function Dashboard() {
                   <XAxis
                     type="number"
                     tickFormatter={(v) => v.toFixed(0)}
-                    domain={[0, "dataMax + 2"]} // un poco de aire
+                    domain={[0, "dataMax + 2"]}
                   />
                   <YAxis
                     dataKey="cliente"

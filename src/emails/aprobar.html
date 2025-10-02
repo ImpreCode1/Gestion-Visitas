@@ -54,14 +54,14 @@
         <p><b>Fechas:</b> {{fecha_ida}} - {{fecha_regreso}}</p>
       </div>
 
-      {{#if comentarios.length}}
+      {{#comentarios}}
       <div class="comentarios">
         <b>Comentarios de los revisores:</b>
-        {{#each comentarios}}
-        <div class="comentario"><b>{{this.rol}}:</b> "{{this.comentario}}"</div>
-        {{/each}}
+        {{#comentarios}}
+        <div class="comentario"><b>{{rol}}:</b> "{{comentario}}"</div>
+        {{/comentarios}}
       </div>
-      {{/if}}
+      {{/comentarios}}
 
       <div class="nota">
         ⚠️ A partir de la fecha de regreso de tu visita se habilitará la opción
