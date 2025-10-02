@@ -170,6 +170,13 @@ export default function FacturasPage() {
         const vencido = hoy > fechaLimite;
         const aunNoHabilitado = hoy < fechaRegreso;
 
+        const estadoColor = {
+          pendiente: "bg-yellow-500 text-white",
+          aprobada: "bg-green-600 text-white",
+          rechazada: "bg-red-600 text-white",
+          completada: "bg-blue-600 text-white",
+        };
+
         return (
           <div
             key={visita.id}
@@ -179,8 +186,15 @@ export default function FacturasPage() {
               Visita a <span className="text-blue-600">{visita.cliente}</span>
             </h2>
             <p className="text-gray-600 mb-6">
-              Estado: <strong>{visita.estado}</strong> |{" "}
-              {formatFecha(visita.fecha_ida)} →{" "}
+              Estado:{" "}
+              <strong
+                className={`px-2 py-1 rounded ${
+                  estadoColor[visita.estado] || "bg-gray-400 text-white"
+                }`}
+              >
+                {visita.estado}
+              </strong>{" "}
+              | {formatFecha(visita.fecha_ida)} →{" "}
               {formatFecha(visita.fecha_regreso)}
             </p>
 
@@ -306,9 +320,7 @@ export default function FacturasPage() {
                               </span>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  removeNewFile(visita.id, index)
-                                }
+                                onClick={() => removeNewFile(visita.id, index)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                               >
                                 <X className="w-4 h-4" />
