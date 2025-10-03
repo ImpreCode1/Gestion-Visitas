@@ -197,7 +197,7 @@ export default function MisVisitas() {
               <option value="pendiente">Pendiente</option>
               <option value="aprobada">Aprobada</option>
               <option value="rechazada">Rechazada</option>
-              <option value="realizada">Realizada</option>
+              <option value="completada">Completada</option>
             </select>
           </div>
 
