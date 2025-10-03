@@ -58,15 +58,15 @@ export default function MisVisitas() {
   const estadoColor = (estado) => {
     switch (estado) {
       case "pendiente":
-        return "bg-yellow-200 text-yellow-800";
+        return "bg-yellow-100 text-yellow-700 border border-yellow-300";
       case "aprobada":
-        return "bg-green-200 text-green-800";
+        return "bg-green-100 text-green-700 border border-green-300";
       case "rechazada":
-        return "bg-red-200 text-red-800";
-      case "realizada":
-        return "bg-blue-200 text-blue-800";
+        return "bg-red-100 text-red-700 border border-red-300";
+      case "completada":
+        return "bg-blue-100 text-blue-700 border border-blue-300";
       default:
-        return "bg-gray-200 text-gray-800";
+        return "bg-gray-100 text-gray-700 border border-gray-300";
     }
   };
 
@@ -75,7 +75,8 @@ export default function MisVisitas() {
     if (v.estado === "pendiente") backgroundColor = "#facc15";
     if (v.estado === "aprobada") backgroundColor = "#22c55e";
     if (v.estado === "rechazada") backgroundColor = "#ef4444";
-    if (v.estado === "realizada") backgroundColor = "#3b82f6";
+    if (v.estado === "realizada" || v.estado === "completada")
+      backgroundColor = "#3b82f6";
 
     return {
       ...v,
@@ -97,37 +98,39 @@ export default function MisVisitas() {
 
   return (
     <div className="flex flex-col w-full h-full p-2 md:p-4">
-      <h1 className="text-center text-lg md:text-2xl font-bold text-blue-800 mb-4">
+      <h1 className="text-center text-2xl font-bold text-blue-700 mb-6">
         Mis Visitas
       </h1>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-2 mb-4 md:flex md:justify-center md:space-x-4">
-        <button
-          onClick={() => setTab("calendario")}
-          className={`w-full px-3 py-2 rounded-lg font-semibold transition ${
-            tab === "calendario"
-              ? "bg-blue-600 text-white shadow-md"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          Calendario
-        </button>
-        <button
-          onClick={() => setTab("estado")}
-          className={`w-full px-3 py-2 rounded-lg font-semibold transition ${
-            tab === "estado"
-              ? "bg-blue-600 text-white shadow-md"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          Estado
-        </button>
+      <div className="flex justify-center mb-6">
+        <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
+          <button
+            onClick={() => setTab("calendario")}
+            className={`px-4 py-2 rounded-lg font-semibold transition ${
+              tab === "calendario"
+                ? "bg-blue-600 text-white shadow-lg"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Calendario
+          </button>
+          <button
+            onClick={() => setTab("estado")}
+            className={`px-4 py-2 rounded-lg font-semibold transition ${
+              tab === "estado"
+                ? "bg-blue-600 text-white shadow-lg"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Estado de Visitas
+          </button>
+        </div>
       </div>
 
       {/* Contenido */}
       {tab === "calendario" ? (
-        <div className="bg-white rounded-xl shadow-md p-2 md:p-4">
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
           <FullCalendar
             plugins={[
               dayGridPlugin,
@@ -135,6 +138,7 @@ export default function MisVisitas() {
               timeGridPlugin,
               listPlugin,
             ]}
+            locale="es" // 🔹 idioma español
             initialView={isMobile ? "listWeek" : "dayGridMonth"}
             headerToolbar={{
               left: "prev,next today",
@@ -147,14 +151,13 @@ export default function MisVisitas() {
               today: "Hoy",
               month: "Mes",
               week: "Semana",
+              day: "Día",
               list: "Lista",
             }}
             events={eventosConColor}
             eventClick={(info) => {
               alert(
-                `Visita: ${info.event.title}\nEstado: ${
-                  visitas.find((v) => v.id === info.event.id)?.estado
-                }`
+                `📌 Visita: ${info.event.title}`
               );
             }}
             height="auto"
@@ -171,19 +174,19 @@ export default function MisVisitas() {
                 },
               },
             }}
-            dayHeaderClassNames="bg-blue-50 text-blue-700 font-semibold text-xs md:text-sm"
+            dayHeaderClassNames="bg-blue-50 text-blue-700 font-semibold text-sm border"
             dayCellClassNames="hover:bg-blue-50 transition cursor-pointer"
-            eventClassNames="rounded-md shadow-sm text-xs md:text-sm px-1 py-0.5"
+            eventClassNames="rounded-md shadow text-xs md:text-sm px-1 py-0.5"
             moreLinkClassNames="text-blue-600 hover:underline text-xs"
           />
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-md p-2 md:p-4">
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
           {/* 🔹 Barra de búsqueda y filtros */}
-          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-6">
             <input
               type="text"
-              placeholder="Buscar por cliente, motivo o persona"
+              placeholder="🔍 Buscar por cliente, motivo o persona"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full md:w-1/3 p-2 border rounded-lg text-sm focus:ring focus:ring-blue-200"
@@ -197,11 +200,11 @@ export default function MisVisitas() {
               <option value="pendiente">Pendiente</option>
               <option value="aprobada">Aprobada</option>
               <option value="rechazada">Rechazada</option>
-              <option value="completada">Completada</option>
+              <option value="realizada">Realizada</option>
             </select>
           </div>
 
-          {/* Desktop → tabla enriquecida */}
+          {/* Tabla desktop */}
           {!isMobile ? (
             <table className="w-full text-sm md:text-base border-collapse">
               <thead>
@@ -209,7 +212,7 @@ export default function MisVisitas() {
                   <th className="p-2">Cliente</th>
                   <th className="p-2">Motivo</th>
                   <th className="p-2">Fechas</th>
-                  <th className="p-2">Persona a Visitar</th>
+                  <th className="p-2">Persona</th>
                   <th className="p-2">Estado</th>
                   <th className="p-2">Aprobaciones</th>
                   <th className="p-2">Facturas</th>
@@ -224,13 +227,13 @@ export default function MisVisitas() {
                     <td className="p-2">{v.cliente}</td>
                     <td className="p-2">{v.motivo}</td>
                     <td className="p-2">
-                      {new Date(v.start).toLocaleDateString()} -{" "}
-                      {new Date(v.end).toLocaleDateString()}
+                      {new Date(v.start).toLocaleDateString("es-CO")} -{" "}
+                      {new Date(v.end).toLocaleDateString("es-CO")}
                     </td>
                     <td className="p-2">{v.personaVisita || "-"}</td>
                     <td className="p-2">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${estadoColor(
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${estadoColor(
                           v.estado
                         )}`}
                       >
@@ -259,7 +262,7 @@ export default function MisVisitas() {
                     <td className="p-2">
                       {v.facturas ? (
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium text-green-700">
                             ${v.facturas.montoTotal?.toFixed(2)}
                           </p>
                           <ul className="text-xs text-blue-600">
@@ -286,7 +289,7 @@ export default function MisVisitas() {
               </tbody>
             </table>
           ) : (
-            /* Mobile → Cards más completas */
+            // 🔹 Versión móvil → tarjetas
             <div className="space-y-3">
               {visitasFiltradas.map((v) => (
                 <div
@@ -305,8 +308,8 @@ export default function MisVisitas() {
                   </div>
                   <p className="text-sm text-gray-600">{v.motivo}</p>
                   <p className="text-sm">
-                    {new Date(v.start).toLocaleDateString()} -{" "}
-                    {new Date(v.end).toLocaleDateString()}
+                    {new Date(v.start).toLocaleDateString("es-CO")} -{" "}
+                    {new Date(v.end).toLocaleDateString("es-CO")}
                   </p>
                   <p className="text-sm text-gray-700">
                     Persona: {v.personaVisita || "-"}
@@ -344,7 +347,7 @@ export default function MisVisitas() {
                     </h4>
                     {v.facturas ? (
                       <div>
-                        <p className="text-xs font-medium">
+                        <p className="text-xs font-medium text-green-700">
                           Total: ${v.facturas.montoTotal?.toFixed(2)}
                         </p>
                         <ul className="text-xs list-disc ml-4 text-blue-600">
