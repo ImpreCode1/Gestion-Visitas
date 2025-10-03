@@ -150,36 +150,6 @@ export default function UsuariosPage() {
                       >
                         Editar
                       </button>
-
-                      {/* Botón para inactivar usuario */}
-                      <button
-                        onClick={async () => {
-                          if (
-                            !confirm(
-                              "¿Seguro que deseas inactivar este usuario?"
-                            )
-                          )
-                            return;
-
-                          try {
-                            const res = await fetch(`/api/users/${user.id}`, {
-                              method: "DELETE",
-                            });
-
-                            if (!res.ok)
-                              throw new Error("Error al eliminar usuario");
-
-                            alert("Usuario eliminado correctamente ✅");
-                            setUsers(users.filter((u) => u.id !== user.id));
-                          } catch (error) {
-                            console.error(error);
-                            alert(error.message || "Error al eliminar usuario");
-                          }
-                        }}
-                        className="px-3 py-1 text-sm sm:text-base bg-red-500 text-white rounded-md hover:bg-red-600 transition w-full sm:w-auto"
-                      >
-                        Inactivar
-                      </button>
                     </td>
                   </tr>
                 ))

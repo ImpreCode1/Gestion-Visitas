@@ -34,37 +34,6 @@ export async function GET(request, { params }) {
 }
 
 // ==============================
-// DELETE user by ID (soft delete)
-// ==============================
-export async function DELETE(request, { params }) {
-  const { id } = await params;
-  const userId = parseInt(id, 10);
-
-  // Validación del ID
-  if (Number.isNaN(userId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
-  }
-
-  try {
-    // Actualizamos la fecha de eliminación en lugar de borrarlo físicamente
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { deletedAt: new Date() },
-    });
-
-    return NextResponse.json({ message: "User soft-deleted successfully", user });
-  } catch (error) {
-    console.error("Error soft-deleting user:", error);
-
-    // P2025 es el código de error de Prisma si no se encuentra el registro
-    if (error?.code === "P2025")
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-// ==============================
 // PUT user by ID (actualización)
 // ==============================
 export async function PUT(request, { params }) {
