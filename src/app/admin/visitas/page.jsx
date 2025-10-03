@@ -99,6 +99,7 @@ export default function VisitasPage() {
               <option value="pendiente">Pendiente</option>
               <option value="aprobada">Aprobada</option>
               <option value="rechazada">Rechazada</option>
+              <option value="completada">Completada</option>
             </select>
           </div>
         </div>
