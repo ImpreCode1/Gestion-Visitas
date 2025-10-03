@@ -75,8 +75,7 @@ export default function MisVisitas() {
     if (v.estado === "pendiente") backgroundColor = "#facc15";
     if (v.estado === "aprobada") backgroundColor = "#22c55e";
     if (v.estado === "rechazada") backgroundColor = "#ef4444";
-    if (v.estado === "realizada" || v.estado === "completada")
-      backgroundColor = "#3b82f6";
+    if (v.estado === "completada") backgroundColor = "#3b82f6";
 
     return {
       ...v,

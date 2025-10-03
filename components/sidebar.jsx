@@ -222,7 +222,7 @@ export default function Sidebar({ sidebarAbierto, setSidebarAbierto }) {
         </div>
 
         {/* Menú con secciones */}
-        <nav className="flex-1 overflow-y-auto text-sm">
+        <nav className="flex-1 overflow-y-auto text-sm no-scrollbar">
           <ul className="flex flex-col py-4">
             {menus.map((seccion, i) => (
               <li key={i} className="mb-4">

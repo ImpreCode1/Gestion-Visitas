@@ -26,3 +26,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* 🔒 Ocultar scrollbars en cualquier elemento con la clase no-scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari y Edge */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE y Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
