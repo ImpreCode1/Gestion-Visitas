@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
  * - Muestra todos los usuarios en una tabla.
  * - Permite búsqueda por nombre o email.
  * - Permite filtrar por rol.
- * - Permite editar o inactivar usuarios.
  */
 export default function UsuariosPage() {
   // Estados locales

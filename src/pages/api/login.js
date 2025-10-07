@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       displayName: "Usuario Prueba",
       mail: email,
       department: "Administrative and Human Talent",
-      title: "Operating Assets Director",
+      title: "xd",
       mobile: "3001234567",
     };
   } else {

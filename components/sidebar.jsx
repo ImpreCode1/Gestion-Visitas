@@ -39,6 +39,7 @@ const menusPorRol = {
       items: [
         { label: "Usuarios", href: "/admin/usuarios", icon: <FaUserShield /> },
         { label: "Visitas", href: "/admin/visitas", icon: <FaAutoprefixer /> },
+        { label: "Indicadores", href: "/admin/dashboard", icon: <BarChart3 /> },
       ],
     },
     {
@@ -134,6 +135,12 @@ const menusPorRol = {
   ],
   notas_credito: [
     {
+      titulo: "Autorizaciones",
+      items: [
+        { label: "Solicitudes", href: "/aprobaciones", icon: <FaCheckCircle /> },
+      ],
+    },
+    {
       titulo: "Visitas",
       items: [
         { label: "Agendar visita", href: "/agendar_visita", icon: <FaCalendarAlt /> },
@@ -146,12 +153,7 @@ const menusPorRol = {
         { label: "Legalizar gastos", href: "/legalizar_gastos", icon: <FaMoneyBill /> },
       ],
     },
-    {
-      titulo: "Aprobaciones",
-      items: [
-        { label: "Aprobaciones", href: "/aprobaciones", icon: <FaCheckCircle /> },
-      ],
-    }
+    
   ],
   sinRol: [],
 };

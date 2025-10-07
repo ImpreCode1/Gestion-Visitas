@@ -2,17 +2,149 @@
 import { NextResponse } from "next/server";
 import { jwtVerify, SignJWT } from "jose";
 
+// ======================
+// Claves y configuración
+// ======================
 const encoder = new TextEncoder();
 const accessSecret = encoder.encode(process.env.JWT_SECRET);
 const refreshSecret = encoder.encode(process.env.JWT_REFRESH_SECRET);
+const ACCESS_TOKEN_EXP = 60 * 15; // 15 minutos
 
-// Tiempo de expiración del access token (15 minutos recomendado)
-const ACCESS_TOKEN_EXP = 60 * 15; // en segundos
+// ======================
+// Menús por rol
+// ======================
+
+const menusPorRol = {
+  gerenteProducto: [
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+  ],
+  admin: [
+    {
+      titulo: "Administración",
+      items: [
+        { label: "Usuarios", href: "/admin/usuarios" },
+        { label: "Visitas", href: "/admin/visitas" },
+        { label: "Indicadores", href: "/admin/dashboard" },
+      ],
+    },
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+  ],
+  vicepresidente: [
+    {
+      titulo: "Aprobaciones",
+      items: [{ label: "Solicitudes", href: "/aprobaciones" }],
+    },
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+  ],
+  aprobador: [
+    {
+      titulo: "Autorizaciones",
+      items: [{ label: "Autorizar", href: "/aprobaciones" }],
+    },
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+    {
+      titulo: "Historial",
+      items: [{ label: "Visitas", href: "/admin/visitas" }],
+    },
+  ],
+  trainee: [
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+    {
+      titulo: "Administración",
+      items: [
+        { label: "Usuarios", href: "/admin/usuarios" },
+        { label: "Visitas", href: "/admin/visitas" },
+        { label: "Indicadores", href: "/admin/dashboard" },
+      ],
+    },
+    {
+      titulo: "Aprobaciones",
+      items: [{ label: "Aprobaciones", href: "/aprobaciones" }],
+    },
+  ],
+  notas_credito: [
+    {
+      titulo: "Autorizaciones",
+      items: [{ label: "Solicitudes", href: "/aprobaciones" }],
+    },
+    {
+      titulo: "Visitas",
+      items: [
+        { label: "Agendar visita", href: "/agendar_visita" },
+        { label: "Mis visitas", href: "/mis_visitas" },
+      ],
+    },
+    {
+      titulo: "Gastos",
+      items: [{ label: "Legalizar gastos", href: "/legalizar_gastos" }],
+    },
+  ],
+  sinRol: [],
+};
+
+// ======================
+// Helpers
+// ======================
+
+function rutasPermitidasPorRol(role) {
+  const menu = menusPorRol[role] || [];
+  return menu.flatMap((seccion) => seccion.items.map((i) => i.href));
+}
 
 function setAccessCookie(res, token) {
   res.cookies.set("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // seguro en prod
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: ACCESS_TOKEN_EXP,
     sameSite: "lax",
@@ -28,7 +160,6 @@ async function tryVerifyRefresh(refreshToken) {
 }
 
 async function mintAccessFromRefreshPayload(payload) {
-  // 👇 Copiamos los mismos datos que pusimos en el refresh token
   const newPayload = {
     email: payload.email,
     displayName: payload.displayName,
@@ -45,13 +176,15 @@ async function mintAccessFromRefreshPayload(payload) {
     .sign(accessSecret);
 }
 
+// ======================
+// Middleware principal
+// ======================
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-
   const token = request.cookies.get("token")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  // --- /login y /: no dejar acceder si ya hay token ---
+  // --- /login y /: redirecciones básicas ---
   if (pathname === "/login" || pathname === "/") {
     if (!token && !refreshToken) return NextResponse.next();
 
@@ -79,7 +212,7 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  // --- Rutas protegidas ---
+  // --- Proteger rutas ---
   if (!token) {
     if (!refreshToken)
       return NextResponse.redirect(new URL("/login", request.url));
@@ -95,9 +228,27 @@ export async function middleware(request) {
     }
   }
 
-  // Validar access token
+  // --- Verificar token y rol ---
   try {
-    await tryVerifyAccess(token);
+    const { payload } = await tryVerifyAccess(token);
+    const role = payload.role || payload.typerole;
+
+    if (!role) {
+      return NextResponse.redirect(new URL("/sin_acceso", request.url));
+    }
+
+    // Extraer todas las rutas permitidas según el rol
+    const rutasPermitidas = rutasPermitidasPorRol(role);
+
+    // Permitir subrutas, ej: /admin/usuarios/123
+    const isAllowed = rutasPermitidas.some((ruta) =>
+      pathname.startsWith(ruta)
+    );
+
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL("/sin_acceso", request.url));
+    }
+
     return NextResponse.next();
   } catch {
     if (refreshToken) {
@@ -115,6 +266,9 @@ export async function middleware(request) {
   }
 }
 
+// ======================
+// Configuración de Next
+// ======================
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sin_acceso).*)"],
 };
