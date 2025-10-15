@@ -107,8 +107,11 @@ export async function POST(req, context) {
 
       if (correos.length > 0) {
         const html = getTemplate("notificarSupplyProcurement", {
+          usuario: visita.gerente.name,
           cliente: visita.cliente,
           motivo: visita.motivo,
+          ciudad_origen: visita.ciudad_origen,
+          ciudad: visita.ciudad,
           fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
           fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
           comentario: aprobacion.comentario ?? "",
@@ -117,6 +120,37 @@ export async function POST(req, context) {
         await sendMail({
           to: correos,
           subject: `Visita a ${visita.cliente} ha sido autorizada por vicepresidencia.`,
+          html,
+        });
+      }
+    } else if (aprobacion.rol === "notas_credito") {
+      const usuarios = await prisma.user.findMany({
+        where: {
+          OR: [
+            { position: { contains: "internal supply" } },
+            { position: { contains: "internal procurement" } },
+          ],
+        },
+        select: { email: true },
+      });
+
+      const correos = usuarios.map((u) => u.email);
+
+      if (correos.length > 0) {
+        const html = getTemplate("notificarSupplyProcurement", {
+          usuario: visita.gerente.name,
+          cliente: visita.cliente,
+          motivo: visita.motivo,
+          ciudad_origen: visita.ciudad_origen,
+          ciudad: visita.ciudad,
+          fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
+          fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
+          comentario: aprobacion.comentario ?? "",
+        });
+
+        await sendMail({
+          to: correos,
+          subject: `Visita a ${visita.cliente} ha sido autorizada por el Director de Activos Operativos.`,
           html,
         });
       }

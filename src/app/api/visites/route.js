@@ -156,69 +156,74 @@ export async function POST(request) {
         fecha_regreso: new Date(body.fecha_regreso),
         lugar: body.lugar || "",
         requiereAvion: body.requiereAvion,
-        estado: "pendiente",
-        area: area,
-        ciudad_origen: body.ciudad_origen,
-        gastos_viaje: "",
         fondos_fabrica: body.fondos_fabrica,
+        ciudad_origen: body.ciudad_origen,
+        estado: "pendiente",
+        area,
+        gastos_viaje: "",
       },
     });
 
-    // 🔹 Crear aprobaciones
+    // ===============================
+    // 🔹 Crear aprobaciones según tipo
+    // ===============================
     let aprobaciones = [];
+
     if (body.requiereAvion === true) {
+      // 🛫 Rama: requiere tiquetes aéreos
       aprobaciones = [
-        {
-          visitaId: nuevaVisita.id,
-          rol: "vicepresidencia",
-          estado: "pendiente",
-        },
+        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
+
     } else if (body.fondos_fabrica === true) {
+      // 💰 Rama: fondos de fábrica (flujo similar al de avión)
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente" },
-      ];
-    } else {
-      aprobaciones = [
+        { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
+      ];
+
+    } else {
+      // 🚗 Rama: no avión / no fondos de fábrica
+      aprobaciones = [
+        { visitaId: nuevaVisita.id, rol: "suministros_internos", estado: "pendiente" },
       ];
     }
 
     await prisma.aprobacion.createMany({ data: aprobaciones });
 
-    // 🔹 Determinar destinatarios
+    // =====================================
+    // 🔹 Determinar destinatarios del correo
+    // =====================================
     let destinatarios = [];
 
     if (body.requiereAvion === true) {
-      // vicepresidente del mismo department
+      // Vicepresidencia del área correspondiente
       const vp = await prisma.user.findFirst({
-        where: {
-          role: "vicepresidente",
-          department: nuevaVisita.area,
-        },
+        where: { role: "vicepresidente", department: nuevaVisita.area },
       });
       if (vp) destinatarios = [vp.email];
+
     } else if (body.fondos_fabrica === true) {
-      const notascredito = await prisma.user.findFirst({
-        where: {
-          role: "notas_credito",
-        },
+      // Director de Activos Operativos
+      const director = await prisma.user.findFirst({
+        where: { role: "notas_credito" },
       });
-      if (notascredito) destinatarios = [notascredito.email];
+      if (director) destinatarios = [director.email];
+
     } else {
-      // coordinadores internos (role que incluya "Internal Supply")
-      const coordinadores = await prisma.user.findMany({
-        where: {
-          position: {
-            contains: "Internal Supply",
-          },
-        },
+      // Suministros Internos
+      const suministros = await prisma.user.findMany({
+        where: { role: "Internal Supply" },
       });
-      destinatarios = coordinadores.map((c) => c.email);
+      destinatarios = suministros.map((s) => s.email);
     }
 
+    // ==============================
+    // 🔹 Plantilla del correo de aviso
+    // ==============================
     const html = getTemplate("agendar", {
       usuario: usuario.name,
       cliente: nuevaVisita.cliente,
@@ -234,7 +239,7 @@ export async function POST(request) {
       fondos_fabrica: nuevaVisita.fondos_fabrica,
     });
 
-    // 🔹 Enviar correo llamando al endpoint /api/send-mail
+    // 🔹 Enviar correo a los destinatarios
     if (destinatarios.length > 0) {
       try {
         await fetch(`${request.nextUrl.origin}/api/send-mail`, {
