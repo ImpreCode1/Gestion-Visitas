@@ -263,7 +263,9 @@ export default function VerAprobaciones() {
             {/* Rol */}
             <div className="md:col-span-2 text-sm mb-2 md:mb-0">
               <div className="text-gray-500">Rol</div>
-              <div className="font-medium text-gray-700">{getRolLegible(rol)}</div>
+              <div className="font-medium text-gray-700">
+                {getRolLegible(rol)}
+              </div>
             </div>
 
             {/* Fecha de creación */}
@@ -328,6 +330,13 @@ export default function VerAprobaciones() {
       </div>
     );
   }
+
+  const roleMap = {
+    vicepresidencia: "Vicepresidencia",
+    tiquetes: "Compras Internas",
+    transporte: "Suministros Internos",
+    notas_credito: "Director de Activos Operativos",
+  };
 
   // --- render principal ---
   return (
@@ -537,6 +546,7 @@ export default function VerAprobaciones() {
       {detailOpen && currentRow && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+            {/* HEADER */}
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-xl font-semibold">Detalle de aprobación</h2>
               <button
@@ -547,6 +557,7 @@ export default function VerAprobaciones() {
               </button>
             </div>
 
+            {/* INFORMACIÓN PRINCIPAL */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="font-medium">Cliente:</span>{" "}
@@ -592,41 +603,97 @@ export default function VerAprobaciones() {
                 {currentRow.visita?.motivo || "-"}
               </div>
 
-              <div className="col-span-2 mt-2">
-                <h3 className="font-semibold mb-2">
-                  Aprobaciones relacionadas
+              {/* ==================== AUTORIZACIONES ==================== */}
+              <div className="col-span-2 mt-4">
+                <h3 className="font-semibold mb-2 text-red-700">
+                  Autorizaciones relacionadas
                 </h3>
                 <div className="space-y-2">
                   {Array.isArray(currentRow.visita?.aprobaciones) &&
-                  currentRow.visita.aprobaciones.length > 0 ? (
-                    currentRow.visita.aprobaciones.map((a) => (
-                      <div
-                        key={a.id}
-                        className="p-3 border rounded flex items-center justify-between"
-                      >
-                        <div>
-                          <div className="font-medium">{a.rol}</div>
-                          <div className="text-xs text-gray-500">
-                            {a.comentario || "-"}
+                  currentRow.visita.aprobaciones.filter(
+                    (a) =>
+                      a.rol === "vicepresidencia" || a.rol === "notas_credito"
+                  ).length > 0 ? (
+                    currentRow.visita.aprobaciones
+                      .filter(
+                        (a) =>
+                          a.rol === "vicepresidencia" ||
+                          a.rol === "notas_credito"
+                      )
+                      .map((a) => (
+                        <div
+                          key={a.id}
+                          className="p-3 border rounded flex items-center justify-between"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {roleMap[a.rol] || a.rol}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {a.comentario || "-"}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <EstadoBadge estado={a.estado} />
+                            <div className="text-xs text-gray-400 mt-1">
+                              {a.updatedAt ? fmtDate(a.updatedAt) : ""}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <EstadoBadge estado={a.estado} />
-                          <div className="text-xs text-gray-400 mt-1">
-                            {a.updatedAt ? fmtDate(a.updatedAt) : ""}
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                      ))
                   ) : (
                     <div className="text-sm text-gray-500">
-                      No hay aprobaciones relacionadas.
+                      No hay autorizaciones relacionadas.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ==================== GESTIONES ==================== */}
+              <div className="col-span-2 mt-6">
+                <h3 className="font-semibold mb-2 text-blue-700">
+                  Gestiones relacionadas
+                </h3>
+                <div className="space-y-2">
+                  {Array.isArray(currentRow.visita?.aprobaciones) &&
+                  currentRow.visita.aprobaciones.filter(
+                    (a) => a.rol === "tiquetes" || a.rol === "transporte"
+                  ).length > 0 ? (
+                    currentRow.visita.aprobaciones
+                      .filter(
+                        (a) => a.rol === "tiquetes" || a.rol === "transporte"
+                      )
+                      .map((a) => (
+                        <div
+                          key={a.id}
+                          className="p-3 border rounded flex items-center justify-between"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {roleMap[a.rol] || a.rol}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {a.comentario || "-"}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <EstadoBadge estado={a.estado} />
+                            <div className="text-xs text-gray-400 mt-1">
+                              {a.updatedAt ? fmtDate(a.updatedAt) : ""}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      No hay gestiones relacionadas.
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
+            {/* FOOTER */}
             <div className="flex justify-end mt-6">
               <button
                 className="px-3 py-2 border rounded hover:bg-gray-100"

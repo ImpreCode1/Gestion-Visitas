@@ -188,7 +188,7 @@ export async function POST(request) {
     } else {
       // 🚗 Rama: no avión / no fondos de fábrica
       aprobaciones = [
-        { visitaId: nuevaVisita.id, rol: "suministros_internos", estado: "pendiente" },
+        { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
     }
 
@@ -216,7 +216,7 @@ export async function POST(request) {
     } else {
       // Suministros Internos
       const suministros = await prisma.user.findMany({
-        where: { role: "Internal Supply" },
+        where: { position: { contains: "Internal Supply" } },
       });
       destinatarios = suministros.map((s) => s.email);
     }

@@ -44,8 +44,8 @@ export default async function handler(req, res) {
     userInfo = {
       displayName: "Usuario Prueba",
       mail: email,
-      department: "Administrative and Human Talent",
-      title: "xd",
+      department: "Human Talent and Administrative",
+      title: "Human Talent and Administrative Vicepresident",
       mobile: "3001234567",
     };
   } else {

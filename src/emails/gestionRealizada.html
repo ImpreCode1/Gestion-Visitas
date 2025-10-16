@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background-color: #f3f4f6;
+        margin: 0;
+        padding: 24px;
+      }
+
+      .card {
+        background: #ffffff;
+        padding: 28px;
+        border-radius: 10px;
+        max-width: 640px;
+        margin: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      h2 {
+        color: #15803d;
+        margin-top: 0;
+        text-align: center;
+      }
+
+      .intro {
+        margin-bottom: 14px;
+        line-height: 1.5;
+      }
+
+      .details {
+        background: #f9fafb;
+        border-left: 4px solid #16a34a;
+        padding: 14px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-top: 16px;
+      }
+
+      .footer {
+        font-size: 12px;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 28px;
+      }
+
+      .btn {
+        display: inline-block;
+        background-color: #16a34a;
+        color: white !important;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 16px;
+      }
+
+      p {
+        color: #111827;
+        margin: 8px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      class="card"
+      role="article"
+      aria-label="Notificación de gestión completada"
+    >
+      <h2>Gestión completada ✅</h2>
+
+      <p class="intro">Hola {{usuario}},</p>
+
+      <p class="intro">
+        Te informamos que la gestión por parte de
+        <strong>{{gestion}}</strong> para tu visita al cliente
+        <strong>{{cliente}}</strong> ha sido completada exitosamente.
+      </p>
+
+      <div class="details">
+        <p><strong>Motivo de la visita:</strong> {{motivo}}</p>
+        <p><strong>Fechas:</strong> {{fecha_ida}} → {{fecha_regreso}}</p>
+      </div>
+
+      <p style="margin-top: 16px;">
+        Puedes consultar el estado y detalles relacionados directamente en el
+        <strong>Sistema de Gestión de Visitas</strong>.
+      </p>
+
+
+      <div class="footer">
+        <p>
+          Este mensaje fue generado automáticamente por el Sistema de Gestión de
+          Visitas. No respondas a este correo.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

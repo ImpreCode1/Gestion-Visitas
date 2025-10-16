@@ -14,20 +14,48 @@
         background: #ffffff;
         padding: 28px;
         border-radius: 10px;
-        max-width: 560px;
+        max-width: 640px;
         margin: auto;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
       h2 {
-        color: #dc2626;
+        color: #b91c1c;
         margin-top: 0;
         text-align: center;
       }
 
-      .info {
+      .intro {
+        margin-bottom: 14px;
+        line-height: 1.5;
+      }
+
+      .details {
         margin: 18px 0;
         line-height: 1.6;
+      }
+
+      .highlight {
+        background: #f9fafb;
+        border-left: 4px solid #2563eb;
+        padding: 12px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .comment {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fff7ed;
+        border: 1px solid #fcd34d;
+        border-radius: 8px;
+        line-height: 1.5;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: #6b7280;
+        margin-top: 16px;
       }
 
       .btn {
@@ -37,50 +65,51 @@
         padding: 10px 20px;
         border-radius: 6px;
         text-decoration: none;
-        font-weight: 500;
-        margin-top: 10px;
+        font-weight: 600;
+        margin-top: 14px;
       }
 
       .footer {
         font-size: 12px;
         color: #6b7280;
         text-align: center;
-        margin-top: 30px;
-      }
-
-      .highlight {
-        background: #f9fafb;
-        border-left: 4px solid #2563eb;
-        padding: 10px 14px;
-        border-radius: 6px;
-        font-size: 14px;
+        margin-top: 28px;
       }
     </style>
   </head>
 
   <body>
-    <div class="card">
+    <div
+      class="card"
+      role="article"
+      aria-label="Notificación de gestión pendiente"
+    >
       <h2>Gestión pendiente de visita ⏳</h2>
 
-      <p>Hola,</p>
+      <p class="intro">Hola,</p>
 
-      <p>
-        Se ha registrado una nueva visita para el cliente <b>{{cliente}}</b> que
-        requiere tu <b>gestión</b> dentro del sistema de programación de visitas.
+      <p class="intro">
+        Se ha registrado una nueva visita que requiere tu
+        <strong>gestión</strong> en el Sistema de Gestión de Visitas.
       </p>
 
-      <div class="highlight">
-        <p><b>Solicitante:</b> {{usuario}}</p>
-        <p><b>Motivo:</b> {{motivo}}</p>
-        <p><b>Origen:</b> {{ciudad_origen}}</p>
-        <p><b>Destino:</b> {{ciudad}}</p>
-        <p><b>Fechas:</b> {{fecha_ida}} → {{fecha_regreso}}</p>
+      <div class="highlight details" aria-live="polite">
+        <p><strong>Solicitante:</strong> {{usuario}}</p>
+        <p><strong>Cliente:</strong> {{cliente}}</p>
+        <p><strong>Motivo:</strong> {{motivo}}</p>
+        <p><strong>Origen:</strong> {{ciudad_origen}}</p>
+        <p><strong>Destino:</strong> {{ciudad}}, {{pais}}</p>
+        <p><strong>Fechas:</strong> {{fecha_ida}} → {{fecha_regreso}}</p>
       </div>
 
-      <p>
-        Por favor, ingresa al sistema para realizar la gestión correspondiente y
-        continuar con el proceso.
-      </p>
+      <!-- Sección opcional: comentario del aprobador -->
+      <!-- Mostrar solo si {{comentario}} no está vacío -->
+      {{#comentario}}
+      <div class="comment" aria-label="Comentario del aprobador">
+        <p style="margin: 0"><strong>Comentario:</strong></p>
+        <p style="margin-top: 8px">{{comentario}}</p>
+      </div>
+      {{/comentario}} 
 
       <div class="footer">
         <p>

@@ -18,33 +18,26 @@ export async function POST(req, context) {
         updatedAt: new Date(),
       },
       include: {
-        visita: {
-          include: {
-            gerente: true,
-          },
-        },
+        visita: { include: { gerente: true } },
       },
     });
 
-    // 🔄 Volver a cargar todas las aprobaciones de la visita (para tener comentarios actualizados)
+    const visita = aprobacion.visita;
+
+    // 🔄 Recargar todas las aprobaciones
     const aprobaciones = await prisma.aprobacion.findMany({
-      where: { visitaId: aprobacion.visitaId },
+      where: { visitaId: visita.id },
     });
 
-    const visita = await prisma.visita.findUnique({
-      where: { id: aprobacion.visitaId },
-      include: { gerente: true },
-    });
-
-    // Mapa de roles -> nombre legible
+    // 🧭 Mapa de roles legibles
     const roleMap = {
       vicepresidencia: "Vicepresidencia",
-      tiquetes: "Compras internas",
-      transporte: "Suministros internos",
-      notas_credito: "Notas Crédito",
+      tiquetes: "Compras Internas",
+      transporte: "Suministros Internos",
+      notas_credito: "Director de Activos Operativos",
     };
 
-    // Construir lista de comentarios (solo los que tengan texto)
+    // 📝 Recolectar comentarios existentes
     const comentarios = aprobaciones
       .filter((a) => a.comentario && a.comentario.trim() !== "")
       .map((a) => ({
@@ -52,9 +45,7 @@ export async function POST(req, context) {
         comentario: a.comentario,
       }));
 
-    console.log("Comentarios a incluir en el correo:", comentarios);
-
-    // Helper para enviar correos
+    // 📬 Helper para enviar correos
     const sendMail = async ({ to, subject, html }) => {
       await fetch(`${req.nextUrl.origin}/api/send-mail`, {
         method: "POST",
@@ -63,14 +54,50 @@ export async function POST(req, context) {
       });
     };
 
-    // 2️⃣ Caso: visita con 1 sola aprobación (solo 1 aprobador en total)
-    if (aprobaciones.length === 1) {
+    // ==============================
+    // 🔹 LÓGICA PRINCIPAL DE NOTIFICACIÓN
+    // ==============================
+
+    // Caso A — Vicepresidencia aprueba (viaje con avión)
+    if (aprobacion.rol === "vicepresidencia") {
+      // 1️⃣ Notificar Suministros + Compras para gestión interna
+      const usuariosInternos = await prisma.user.findMany({
+        where: {
+          OR: [
+            { position: { contains: "internal supply" } },
+            { position: { contains: "internal procurement" } },
+          ],
+        },
+        select: { email: true },
+      });
+
+      const internos = usuariosInternos.map((u) => u.email);
+      if (internos.length > 0) {
+        const html = getTemplate("notificarSupplyProcurement", {
+          usuario: visita.gerente.name,
+          cliente: visita.cliente,
+          motivo: visita.motivo,
+          ciudad_origen: visita.ciudad_origen,
+          ciudad: visita.ciudad,
+          fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
+          fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
+          comentario: aprobacion.comentario ?? "",
+        });
+
+        await sendMail({
+          to: internos,
+          subject: `Gestión requerida: visita aprobada por Vicepresidencia (${visita.cliente})`,
+          html,
+        });
+      }
+
+      // 2️⃣ Avisar al gerente que su visita fue aprobada
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
       });
 
-      const html = getTemplate("aprobar", {
+      const htmlAprobado = getTemplate("aprobar", {
         usuario: visita.gerente.name,
         cliente: visita.cliente,
         motivo: visita.motivo,
@@ -81,19 +108,15 @@ export async function POST(req, context) {
 
       await sendMail({
         to: [visita.gerente.email],
-        subject: `Tu visita a ${visita.cliente} fue aprobada`,
-        html,
+        subject: `Tu visita a ${visita.cliente} fue aprobada ✅`,
+        html: htmlAprobado,
       });
-
-      return NextResponse.json(aprobacion);
     }
 
-    // 3️⃣ Caso: varias aprobaciones
-    const todasAprobadas = aprobaciones.every((a) => a.estado === "aprobado");
-
-    // (a) Vicepresidencia aprobó → notificar supply + procurement (solo el comentario de vicepresidencia)
-    if (aprobacion.rol === "vicepresidencia") {
-      const usuarios = await prisma.user.findMany({
+    // Caso B — Director de Activos Operativos aprueba (fondos de fábrica)
+    else if (aprobacion.rol === "notas_credito") {
+      // 1️⃣ Notificar Suministros + Compras
+      const usuariosInternos = await prisma.user.findMany({
         where: {
           OR: [
             { position: { contains: "internal supply" } },
@@ -103,9 +126,8 @@ export async function POST(req, context) {
         select: { email: true },
       });
 
-      const correos = usuarios.map((u) => u.email);
-
-      if (correos.length > 0) {
+      const internos = usuariosInternos.map((u) => u.email);
+      if (internos.length > 0) {
         const html = getTemplate("notificarSupplyProcurement", {
           usuario: visita.gerente.name,
           cliente: visita.cliente,
@@ -118,74 +140,84 @@ export async function POST(req, context) {
         });
 
         await sendMail({
-          to: correos,
-          subject: `Visita a ${visita.cliente} ha sido autorizada por vicepresidencia.`,
+          to: internos,
+          subject: `Gestión requerida: visita aprobada por Director de Activos Operativos (${visita.cliente})`,
           html,
         });
       }
-    } else if (aprobacion.rol === "notas_credito") {
-      const usuarios = await prisma.user.findMany({
-        where: {
-          OR: [
-            { position: { contains: "internal supply" } },
-            { position: { contains: "internal procurement" } },
-          ],
-        },
-        select: { email: true },
+
+      // 2️⃣ Avisar al gerente
+      await prisma.visita.update({
+        where: { id: visita.id },
+        data: { estado: EstadoVisita.aprobada },
       });
 
-      const correos = usuarios.map((u) => u.email);
+      const htmlAprobado = getTemplate("aprobar", {
+        usuario: visita.gerente.name,
+        cliente: visita.cliente,
+        motivo: visita.motivo,
+        fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
+        fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
+        comentarios,
+      });
 
-      if (correos.length > 0) {
-        const html = getTemplate("notificarSupplyProcurement", {
+      await sendMail({
+        to: [visita.gerente.email],
+        subject: `Tu visita a ${visita.cliente} fue aprobada ✅`,
+        html: htmlAprobado,
+      });
+    }
+
+    // Caso C — Suministros Internos aprueba (flujo sin avión ni fondos)
+    else if (aprobacion.rol === "transporte") {
+      // ✅ Solo enviar el correo si esta es la única aprobación existente
+      if (aprobaciones.length === 1) {
+        await prisma.visita.update({
+          where: { id: visita.id },
+          data: { estado: EstadoVisita.aprobada },
+        });
+
+        const htmlGestion = getTemplate("gestionRealizada", {
           usuario: visita.gerente.name,
           cliente: visita.cliente,
           motivo: visita.motivo,
-          ciudad_origen: visita.ciudad_origen,
-          ciudad: visita.ciudad,
+          gestion: "Suministros Internos",
           fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
           fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
-          comentario: aprobacion.comentario ?? "",
         });
 
         await sendMail({
-          to: correos,
-          subject: `Visita a ${visita.cliente} ha sido autorizada por el Director de Activos Operativos.`,
-          html,
+          to: [visita.gerente.email],
+          subject: `La gestión por parte de Suministros Internos ha sido realizada (${visita.cliente})`,
+          html: htmlGestion,
         });
       }
     }
 
-    // (b) Todos aprobaron → aprobar visita y notificar solicitante con TODOS los comentarios mapeados
+    // Caso D — Todas las aprobaciones completadas (3 roles)
+    const todasAprobadas =
+      aprobaciones.length >= 3 &&
+      aprobaciones.every((a) => a.estado === "aprobado");
+
     if (todasAprobadas) {
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
       });
 
-      // (recalcular comentarios por si cambió algo)
-      const comentariosFinales = aprobaciones
-        .filter((a) => a.comentario && a.comentario.trim() !== "")
-        .map((a) => ({
-          rol: roleMap[a.rol] ?? a.rol,
-          comentario: a.comentario,
-        }));
-
-      console.log("Comentarios finales enviados al solicitante:", comentariosFinales);
-
-      const html = getTemplate("aprobar", {
+      const htmlGestionFinal = getTemplate("gestionRealizada", {
         usuario: visita.gerente.name,
         cliente: visita.cliente,
         motivo: visita.motivo,
+        gestion: "Suministros Internos y Compras Internas",
         fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
         fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
-        comentarios: comentariosFinales,
       });
 
       await sendMail({
         to: [visita.gerente.email],
-        subject: `Tu visita a ${visita.cliente} fue aprobada`,
-        html,
+        subject: `La gestión por parte de Suministros Internos y Compras Internas ha sido completada (${visita.cliente})`,
+        html: htmlGestionFinal,
       });
     }
 
