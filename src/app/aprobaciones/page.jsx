@@ -567,10 +567,20 @@ export default function VerAprobaciones() {
                 <span className="font-medium">Gerente:</span>{" "}
                 {currentRow.visita?.gerente?.name}
               </div>
+
+              {/* Nueva info: ciudades */}
               <div>
-                <span className="font-medium">Ciudad / País:</span>{" "}
-                {currentRow.visita?.ciudad}{" "}
-                {currentRow.visita?.pais ? ` / ${currentRow.visita?.pais}` : ""}
+                <span className="font-medium">Ciudad origen:</span>{" "}
+                {currentRow.visita?.ciudad_origen || "-"}
+              </div>
+              <div>
+                <span className="font-medium">Ciudad destino:</span>{" "}
+                {currentRow.visita?.ciudad || "-"}
+              </div>
+
+              <div>
+                <span className="font-medium">País:</span>{" "}
+                {currentRow.visita?.pais || "-"}
               </div>
               <div>
                 <span className="font-medium">Lugar:</span>{" "}
@@ -590,14 +600,22 @@ export default function VerAprobaciones() {
                 <span className="font-medium">Estado visita:</span>{" "}
                 <EstadoBadge estado={currentRow.visita?.estado} />
               </div>
-              <div>
-                <span className="font-medium">Requiere tiquetes aéreos:</span>{" "}
-                {currentRow.visita?.requiereAvion ? "Sí" : "No"}
-              </div>
-              <div>
-                <span className="font-medium">Fondos de fábrica:</span>{" "}
-                {currentRow.visita?.fondos_fabrica ? "Sí" : "No"}
-              </div>
+
+              {/* Condicionales: mostrar solo uno de los dos */}
+              {!currentRow.visita?.fondos_fabrica && (
+                <div>
+                  <span className="font-medium">Requiere tiquetes aéreos:</span>{" "}
+                  {currentRow.visita?.requiereAvion ? "Sí" : "No"}
+                </div>
+              )}
+
+              {!currentRow.visita?.requiereAvion && (
+                <div>
+                  <span className="font-medium">Fondos de fábrica:</span>{" "}
+                  {currentRow.visita?.fondos_fabrica ? "Sí" : "No"}
+                </div>
+              )}
+
               <div className="col-span-2">
                 <span className="font-medium">Motivo:</span>{" "}
                 {currentRow.visita?.motivo || "-"}

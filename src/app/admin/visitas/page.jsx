@@ -241,12 +241,16 @@ export default function VisitasPage() {
                                   : "text-yellow-600"
                               }`}
                             >
-                              {ap.estado}
+                              {["tiquetes", "transporte"].includes(ap.rol) &&
+                              ap.estado === "aprobado"
+                                ? "gestionado"
+                                : ap.estado}
                             </span>
                           </div>
                         ))}
                       </div>
                     </td>
+
                     {/* Acciones */}
                     <td className="p-3 flex flex-col gap-2 text-center">
                       <button
