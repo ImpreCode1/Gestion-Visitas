@@ -177,6 +177,41 @@ export default function FacturasPage() {
           completada: "bg-blue-600 text-white",
         };
 
+        //mensajes personalizados por estado
+        const getMensajePorEstado = (estado) => {
+          switch (estado) {
+            case "pendiente":
+              return {
+                texto:
+                  "⏳ Tu solicitud está en revisión. Por ahora no puedes subir facturas.",
+                estilo:
+                  "bg-yellow-100 border border-yellow-300 text-yellow-700",
+              };
+            case "aprobada":
+              return {
+                texto:
+                  "✅ Tu visita fue aprobada. Podrás subir tus facturas después de realizar el viaje.",
+                estilo: "bg-green-100 border border-green-300 text-green-700",
+              };
+            case "rechazada":
+              return {
+                texto:
+                  "❌ Tu solicitud fue rechazada. No puedes legalizar gastos de esta visita.",
+                estilo: "bg-red-100 border border-red-300 text-red-700",
+              };
+            case "completada":
+              return {
+                texto:
+                  "ℹ️ Esta visita fue marcada como completada",
+                estilo: "bg-blue-100 border border-blue-300 text-blue-700",
+              };
+            default:
+              return null;
+          }
+        };
+
+        const mensaje = getMensajePorEstado(visita.estado);
+
         return (
           <div
             key={visita.id}
@@ -198,8 +233,15 @@ export default function FacturasPage() {
               {formatFecha(visita.fecha_regreso)}
             </p>
 
+            {/* 🟢 Mostrar mensaje personalizado */}
+            {mensaje && (
+              <div className={`p-4 mb-6 rounded-md ${mensaje.estilo}`}>
+                {mensaje.texto}
+              </div>
+            )}
+
             {/* Mensaje antes de habilitar */}
-            {aunNoHabilitado && (
+            {aunNoHabilitado && visita.estado === "aprobada" && (
               <div className="p-4 bg-yellow-100 border border-yellow-300 text-yellow-700 rounded-md">
                 ⚠️ La opción de legalizar gastos estará disponible a partir del{" "}
                 <b>{formatFecha(fechaRegreso)}</b>.
@@ -207,7 +249,7 @@ export default function FacturasPage() {
             )}
 
             {/* Mensaje cuando venció */}
-            {vencido && (
+            {vencido && visita.estado === "aprobada" && (
               <div className="p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
                 ⚠️ Ya venció el plazo para subir facturas. Tenías hasta el{" "}
                 <b>{formatFecha(fechaLimite)}</b>.

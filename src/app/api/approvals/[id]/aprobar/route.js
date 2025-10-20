@@ -183,7 +183,7 @@ export async function POST(req, context) {
       if (aprobaciones.length === 1) {
         await prisma.visita.update({
           where: { id: visita.id },
-          data: { estado: EstadoVisita.aprobada },
+          data: { estado: EstadoVisita.completada },
         });
 
         const htmlGestion = getTemplate("gestionRealizada", {
