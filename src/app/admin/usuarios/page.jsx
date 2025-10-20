@@ -82,7 +82,8 @@ export default function UsuariosPage() {
           >
             <option value="todos">Todos los roles</option>
             <option value="admin">Administrador</option>
-            <option value="aprobador">Internos</option>
+            <option value="aprobador">Compras/Suministros</option>
+            <option value="notas_credito">Notas-Crédito</option>
             <option value="gerenteProducto">Gerente de Producto</option>
             <option value="trainee">Trainee</option>
             <option value="sinRol">Sin Rol</option>

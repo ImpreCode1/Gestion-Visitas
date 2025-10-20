@@ -1,37 +1,47 @@
+/**
+ * @fileoverview Endpoint para el envío de correos a través de Nodemailer.
+ * Permite enviar mensajes personalizados en formato texto o HTML,
+ * corrigiendo automáticamente dominios `.local` a `.com` para evitar errores de entrega.
+ */
+
 import nodemailer from "nodemailer";
 
-// Endpoint POST para enviar correos
 export async function POST(req) {
   try {
-    // Obtenemos los datos del correo desde el body de la petición
+    // Extrae los datos del correo desde el cuerpo de la solicitud
     const { to, subject, text, html } = await req.json();
 
-    // Normalizamos destinatarios (puede ser string o array)
+    // Normaliza los destinatarios: asegura que siempre sea un array
     let destinatarios = Array.isArray(to) ? to : [to];
 
-    // Reemplazamos .local por .com en todos los correos
-    destinatarios = destinatarios.map(email =>
+    // Corrige los dominios ".local" reemplazándolos por ".com"
+    destinatarios = destinatarios.map((email) =>
       email.endsWith(".local") ? email.replace(/\.local$/, ".com") : email
     );
 
-    // Configuración del transporter de Nodemailer
+    // Configura el transporte SMTP para Nodemailer con las variables de entorno
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST, // Servidor SMTP
       port: process.env.EMAIL_PORT, // Puerto SMTP
-      secure: false, // true para puerto 465, false para otros
+      secure: false, // true para puerto 465 (SSL), false para STARTTLS o sin cifrado
     });
 
-    // Enviamos el correo usando la configuración del transporter
+    // Envía el correo electrónico con el contenido proporcionado
     await transporter.sendMail({
-      from: '"Sistema de Gestion de Visitas" <no-reply@impresistem.com>',
-      to: destinatarios, // Destinatario(s) corregidos
+      from: '"Sistema de Gestión de Visitas" <no-reply@impresistem.com>',
+      to: destinatarios,
       subject,
       text,
       html,
     });
 
-    return Response.json({ success: true, message: "Correo enviado correctamente" });
+    // Retorna una respuesta JSON confirmando el envío exitoso
+    return Response.json({
+      success: true,
+      message: "Correo enviado correctamente",
+    });
   } catch (error) {
+    // Registra el error y devuelve una respuesta con estado 500
     console.error("Error enviando correo:", error);
     return Response.json(
       { success: false, error: error.message },

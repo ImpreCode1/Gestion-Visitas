@@ -1,7 +1,14 @@
+/**
+ * @fileoverview Endpoint para registrar la aprobación de una solicitud de visita.
+ * Actualiza el estado de la aprobación y la visita asociada, y envía notificaciones
+ * por correo electrónico según el rol aprobador (vicepresidencia, notas de crédito o transporte).
+ */
+
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoVisita } from "@prisma/client";
 import getTemplate from "../../../../../lib/emails";
 
+// Inicializa Prisma Client
 const prisma = new PrismaClient();
 
 export async function POST(req, context) {
@@ -9,7 +16,8 @@ export async function POST(req, context) {
     const { params } = context;
     const { comentario } = await req.json();
 
-    // 1️⃣ Actualizar la aprobación con estado y comentario
+    // Actualiza la aprobación marcada como aprobada y guarda el comentario
+    // Incluye los datos de la visita y del gerente asociado
     const aprobacion = await prisma.aprobacion.update({
       where: { id: parseInt(params.id) },
       data: {
@@ -24,12 +32,12 @@ export async function POST(req, context) {
 
     const visita = aprobacion.visita;
 
-    // 🔄 Recargar todas las aprobaciones
+    // Recarga todas las aprobaciones relacionadas con la misma visita
     const aprobaciones = await prisma.aprobacion.findMany({
       where: { visitaId: visita.id },
     });
 
-    // 🧭 Mapa de roles legibles
+    // Diccionario para traducir los roles técnicos a nombres legibles
     const roleMap = {
       vicepresidencia: "Vicepresidencia",
       tiquetes: "Compras Internas",
@@ -37,7 +45,7 @@ export async function POST(req, context) {
       notas_credito: "Director de Activos Operativos",
     };
 
-    // 📝 Recolectar comentarios existentes
+    // Recolecta comentarios de las aprobaciones existentes (si los hay)
     const comentarios = aprobaciones
       .filter((a) => a.comentario && a.comentario.trim() !== "")
       .map((a) => ({
@@ -45,7 +53,7 @@ export async function POST(req, context) {
         comentario: a.comentario,
       }));
 
-    // 📬 Helper para enviar correos
+    // Helper para envío de correos a través del endpoint interno /api/send-mail
     const sendMail = async ({ to, subject, html }) => {
       await fetch(`${req.nextUrl.origin}/api/send-mail`, {
         method: "POST",
@@ -54,13 +62,13 @@ export async function POST(req, context) {
       });
     };
 
-    // ==============================
-    // 🔹 LÓGICA PRINCIPAL DE NOTIFICACIÓN
-    // ==============================
+    // ==========================================================
+    // LÓGICA PRINCIPAL DE NOTIFICACIÓN SEGÚN EL ROL APROBADOR
+    // ==========================================================
 
     // Caso A — Vicepresidencia aprueba (viaje con avión)
     if (aprobacion.rol === "vicepresidencia") {
-      // 1️⃣ Notificar Suministros + Compras para gestión interna
+      // Busca usuarios internos encargados de suministros y compras
       const usuariosInternos = await prisma.user.findMany({
         where: {
           OR: [
@@ -71,6 +79,7 @@ export async function POST(req, context) {
         select: { email: true },
       });
 
+      // Si existen usuarios internos, se les envía notificación
       const internos = usuariosInternos.map((u) => u.email);
       if (internos.length > 0) {
         const html = getTemplate("notificarSupplyProcurement", {
@@ -91,7 +100,7 @@ export async function POST(req, context) {
         });
       }
 
-      // 2️⃣ Avisar al gerente que su visita fue aprobada
+      // Actualiza la visita como aprobada y notifica al gerente
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
@@ -108,14 +117,14 @@ export async function POST(req, context) {
 
       await sendMail({
         to: [visita.gerente.email],
-        subject: `Tu visita a ${visita.cliente} fue aprobada ✅`,
+        subject: `Tu visita a ${visita.cliente} fue aprobada`,
         html: htmlAprobado,
       });
     }
 
     // Caso B — Director de Activos Operativos aprueba (fondos de fábrica)
     else if (aprobacion.rol === "notas_credito") {
-      // 1️⃣ Notificar Suministros + Compras
+      // Notifica a los usuarios internos de suministros y compras
       const usuariosInternos = await prisma.user.findMany({
         where: {
           OR: [
@@ -146,7 +155,7 @@ export async function POST(req, context) {
         });
       }
 
-      // 2️⃣ Avisar al gerente
+      // Marca la visita como aprobada y avisa al gerente
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
@@ -163,14 +172,14 @@ export async function POST(req, context) {
 
       await sendMail({
         to: [visita.gerente.email],
-        subject: `Tu visita a ${visita.cliente} fue aprobada ✅`,
+        subject: `Tu visita a ${visita.cliente} fue aprobada`,
         html: htmlAprobado,
       });
     }
 
     // Caso C — Suministros Internos aprueba (flujo sin avión ni fondos)
     else if (aprobacion.rol === "transporte") {
-      // ✅ Solo enviar el correo si esta es la única aprobación existente
+      // Solo se notifica si esta aprobación es la única existente
       if (aprobaciones.length === 1) {
         await prisma.visita.update({
           where: { id: visita.id },
@@ -194,7 +203,7 @@ export async function POST(req, context) {
       }
     }
 
-    // Caso D — Todas las aprobaciones completadas (3 roles)
+    // Caso D — Todas las aprobaciones completadas (3 roles distintos)
     const todasAprobadas =
       aprobaciones.length >= 3 &&
       aprobaciones.every((a) => a.estado === "aprobado");
@@ -221,9 +230,11 @@ export async function POST(req, context) {
       });
     }
 
+    // Devuelve la aprobación actualizada como respuesta
     return NextResponse.json(aprobacion);
   } catch (err) {
-    console.error("❌ Error al aprobar:", err);
+    // Manejo global de errores
+    console.error("Error al aprobar:", err);
     return NextResponse.json({ error: "Error al aprobar" }, { status: 500 });
   }
 }

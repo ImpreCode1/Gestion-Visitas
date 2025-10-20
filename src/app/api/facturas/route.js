@@ -1,3 +1,9 @@
+/**
+ * @fileoverview API para la gestión de facturas asociadas a las visitas.
+ * Permite subir, consultar, actualizar y eliminar facturas junto con sus archivos adjuntos.
+ * Incluye envío de correos automáticos a Compras Internas cuando se suben nuevas facturas.
+ */
+
 import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import fs from "fs";
@@ -5,19 +11,23 @@ import path from "path";
 import { PrismaClient } from "@prisma/client";
 import getTemplate from "../../../lib/emails";
 
+// Inicializa Prisma Client
 const prisma = new PrismaClient();
 
-// 🔹 POST /api/facturas
-// Crea o actualiza facturas de una visita, subiendo varios archivos
-// 🔹 POST /api/facturas
+// ================================================================
+// POST /api/facturas
+// Crea o actualiza facturas de una visita y guarda archivos adjuntos
+// ================================================================
 export async function POST(req) {
   try {
+    // Obtiene los datos enviados en formato FormData
     const formData = await req.formData();
     const files = formData.getAll("files");
     const descripcion = formData.get("descripcion");
     const monto = formData.get("monto");
     const visitaId = parseInt(formData.get("visitaId"));
 
+    // Validación básica de datos requeridos
     if (!visitaId || !files.length) {
       return NextResponse.json(
         { error: "Faltan datos obligatorios (visitaId o archivos)" },
@@ -25,12 +35,10 @@ export async function POST(req) {
       );
     }
 
-    // 1️⃣ Buscar visita y validar fechas
+    // Busca la visita y verifica que el plazo para subir facturas no haya vencido
     const visita = await prisma.visita.findUnique({
       where: { id: visitaId },
-      include: {
-        gerente: true,
-      },
+      include: { gerente: true },
     });
 
     if (!visita) {
@@ -40,6 +48,7 @@ export async function POST(req) {
       );
     }
 
+    // Calcula límite de 3 días posteriores a la fecha de regreso
     const limite = new Date(visita.fecha_regreso);
     limite.setDate(limite.getDate() + 3);
 
@@ -50,9 +59,10 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Verificar si ya existe Factura para esta visita
+    // Verifica si ya existe una factura asociada a la visita
     let factura = await prisma.factura.findUnique({ where: { visitaId } });
 
+    // Crea o actualiza la factura según corresponda
     if (!factura) {
       factura = await prisma.factura.create({
         data: {
@@ -71,7 +81,7 @@ export async function POST(req) {
       });
     }
 
-    // 3️⃣ Guardar archivos en /public/uploads
+    // Guarda físicamente los archivos en /public/uploads y registra en BD
     const archivosGuardados = [];
     for (const file of files) {
       const bytes = await file.arrayBuffer();
@@ -82,7 +92,6 @@ export async function POST(req) {
       const filePath = path.join(uploadDir, fileName);
 
       await writeFile(filePath, buffer);
-
       const fileUrl = `/uploads/${fileName}`;
 
       const archivo = await prisma.archivoFactura.create({
@@ -96,19 +105,15 @@ export async function POST(req) {
       archivosGuardados.push(archivo);
     }
 
-    // 4️⃣ Buscar usuarios que contengan "internal procurement"
+    // Busca usuarios con "internal procurement" en su posición (Compras Internas)
     const usuarios = await prisma.user.findMany({
-      where: {
-        position: {
-          contains: "internal procurement",
-        },
-      },
+      where: { position: { contains: "internal procurement" } },
       select: { email: true, name: true },
     });
 
     const correos = usuarios.map((u) => u.email);
 
-    // Helper para enviar correos
+    // Helper para envío de correos a través del endpoint interno
     const sendMail = async ({ to, subject, html }) => {
       await fetch(`${req.nextUrl.origin}/api/send-mail`, {
         method: "POST",
@@ -117,6 +122,7 @@ export async function POST(req) {
       });
     };
 
+    // Si existen destinatarios, se notifica sobre las nuevas facturas
     if (correos.length > 0) {
       const html = getTemplate("facturasSubidas", {
         cliente: visita.cliente,
@@ -130,16 +136,18 @@ export async function POST(req) {
 
       await sendMail({
         to: correos,
-        subject: `📑 Nuevas facturas subida para la visita a ${visita.cliente}`,
+        subject: `Nuevas facturas subidas para la visita a ${visita.cliente}`,
         html,
       });
     }
 
+    // Actualiza el estado de la visita como completada
     await prisma.visita.update({
-      where:{ id: visitaId},
-      data: { estado: "completada"},
-    })
-    
+      where: { id: visitaId },
+      data: { estado: "completada" },
+    });
+
+    // Devuelve respuesta con la factura y archivos guardados
     return NextResponse.json({
       success: true,
       factura,
@@ -154,7 +162,10 @@ export async function POST(req) {
   }
 }
 
-// 🔹 GET /api/facturas?visitaId=123
+// ================================================================
+// GET /api/facturas?visitaId=123
+// Obtiene la factura y sus archivos asociados a una visita
+// ================================================================
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -172,6 +183,7 @@ export async function GET(req) {
       include: { archivos: true },
     });
 
+    // Si no hay factura, retorna nulo (sin error)
     if (!factura) {
       return NextResponse.json({ success: true, factura: null });
     }
@@ -186,7 +198,10 @@ export async function GET(req) {
   }
 }
 
-// 🔹 DELETE /api/facturas?idArchivo=123
+// ================================================================
+// DELETE /api/facturas?idArchivo=123
+// Elimina un archivo de factura tanto del sistema de archivos como de la BD
+// ================================================================
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -210,15 +225,15 @@ export async function DELETE(req) {
       );
     }
 
-    // Borrar archivo físico
+    // Elimina el archivo físico del servidor
     const filePath = path.join(process.cwd(), "public", archivo.url);
     try {
       await fs.promises.unlink(filePath);
     } catch (err) {
-      console.warn("⚠️ No se pudo borrar archivo físico:", err.message);
+      console.warn("No se pudo borrar archivo físico:", err.message);
     }
 
-    // Borrar de BD
+    // Elimina el registro de la base de datos
     await prisma.archivoFactura.delete({ where: { id: archivo.id } });
 
     return NextResponse.json({ success: true, message: "Archivo eliminado" });
@@ -231,8 +246,10 @@ export async function DELETE(req) {
   }
 }
 
-// 🔹 PUT /api/facturas?visitaId=123
-// Actualiza descripción, monto o fecha de emisión
+// ================================================================
+// PUT /api/facturas?visitaId=123
+// Actualiza la descripción o monto de una factura existente
+// ================================================================
 export async function PUT(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -248,6 +265,7 @@ export async function PUT(req) {
 
     const { descripcion, monto } = body;
 
+    // Actualiza la factura con los nuevos datos
     const factura = await prisma.factura.update({
       where: { visitaId },
       data: {

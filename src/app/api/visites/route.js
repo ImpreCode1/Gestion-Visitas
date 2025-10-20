@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Endpoints para la gestión de visitas.
+ * Incluye:
+ * - GET: Obtiene las visitas asociadas al usuario autenticado, actualizando automáticamente aquellas vencidas.
+ * - POST: Registra una nueva visita, crea las aprobaciones correspondientes y envía las notificaciones por correo.
+ */
+
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@prisma/client";
@@ -6,25 +13,30 @@ import getTemplate from "../../../lib/emails";
 const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-// ======================
-// GET → traer visitas del usuario logueado
-// ======================
+/**
+ * Obtiene todas las visitas asociadas al usuario autenticado.
+ * También marca como "completadas" aquellas visitas cuyo plazo para subir facturas ha vencido.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP.
+ * @returns {Promise<Response>} Respuesta JSON con la lista de visitas del usuario o un mensaje de error.
+ */
 export async function GET(request) {
   try {
-    // 🔹 Obtener token JWT de la cookie
+    // Obtiene el token JWT desde la cookie
     const token = request.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // 🔹 Verificar token
+    // Verifica el token y obtiene el email del usuario
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const email = payload.email;
     if (!email) {
       return NextResponse.json({ error: "Usuario no válido" }, { status: 400 });
     }
 
-    // 🔹 Buscar al usuario en la DB
+    // Busca el usuario en la base de datos
     const usuario = await prisma.user.findUnique({ where: { email } });
     if (!usuario) {
       return NextResponse.json(
@@ -33,7 +45,7 @@ export async function GET(request) {
       );
     }
 
-    // 🔹 Consultar visitas asociadas al gerente logueado
+    // Consulta las visitas asociadas al gerente logueado
     let visitas = await prisma.visita.findMany({
       where: { gerenteId: usuario.id },
       select: {
@@ -61,11 +73,7 @@ export async function GET(request) {
             descripcion: true,
             montoTotal: true,
             archivos: {
-              select: {
-                id: true,
-                nombre: true,
-                url: true,
-              },
+              select: { id: true, nombre: true, url: true },
             },
           },
         },
@@ -73,7 +81,7 @@ export async function GET(request) {
       orderBy: { fecha_ida: "desc" },
     });
 
-    // 🔹 Normalizar fechas a medianoche
+    // Normaliza fechas a medianoche para comparar correctamente
     const normalizarFecha = (fecha) => {
       const f = new Date(fecha);
       f.setHours(0, 0, 0, 0);
@@ -82,7 +90,7 @@ export async function GET(request) {
 
     const hoy = normalizarFecha(new Date());
 
-    // 🔹 Verificar y actualizar visitas vencidas
+    // Verifica visitas vencidas y actualiza su estado a "completada"
     for (const visita of visitas) {
       const fechaRegreso = normalizarFecha(visita.fecha_regreso);
       const fechaLimite = new Date(fechaRegreso);
@@ -92,13 +100,11 @@ export async function GET(request) {
       const yaPasoPlazo = hoy > fechaLimite;
 
       if (yaPasoPlazo && noSubioFacturas && visita.estado !== "completada") {
-        // 🔹 Actualizar en BD
         await prisma.visita.update({
           where: { id: visita.id },
           data: { estado: "completada" },
         });
 
-        // 🔹 Reflejar el cambio en el objeto que devolveremos
         visita.estado = "completada";
       }
     }
@@ -113,9 +119,15 @@ export async function GET(request) {
   }
 }
 
-// ======================
-// POST → crear nueva visita
-// ======================
+/**
+ * Registra una nueva visita asociada al usuario autenticado.
+ * Crea las aprobaciones correspondientes según el tipo de viaje (avión, fondos de fábrica, o transporte)
+ * y notifica por correo electrónico a los responsables del flujo de aprobación.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP con los datos de la visita.
+ * @returns {Promise<Response>} Respuesta JSON con la visita creada o un mensaje de error.
+ */
 export async function POST(request) {
   const token = request.cookies.get("token")?.value;
   if (!token) {
@@ -123,12 +135,12 @@ export async function POST(request) {
   }
 
   try {
-    // 🔹 Verificar token y extraer email
+    // Verifica token y obtiene el email y área del usuario
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const email = payload.email;
     const area = payload.department;
 
-    // 🔹 Buscar usuario en la DB
+    // Busca el usuario en la base de datos
     const usuario = await prisma.user.findUnique({ where: { email } });
     if (!usuario) {
       return NextResponse.json(
@@ -139,7 +151,7 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // 🔹 Crear la visita
+    // Crea la visita en base de datos
     const nuevaVisita = await prisma.visita.create({
       data: {
         gerente: { connect: { id: usuario.id } },
@@ -164,29 +176,25 @@ export async function POST(request) {
       },
     });
 
-    // ===============================
-    // 🔹 Crear aprobaciones según tipo
-    // ===============================
+    // Crea las aprobaciones correspondientes según el tipo de visita
     let aprobaciones = [];
-
     if (body.requiereAvion === true) {
-      // 🛫 Rama: requiere tiquetes aéreos
       aprobaciones = [
-        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente" },
+        {
+          visitaId: nuevaVisita.id,
+          rol: "vicepresidencia",
+          estado: "pendiente",
+        },
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
-
     } else if (body.fondos_fabrica === true) {
-      // 💰 Rama: fondos de fábrica (flujo similar al de avión)
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
-
     } else {
-      // 🚗 Rama: no avión / no fondos de fábrica
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
@@ -194,36 +202,26 @@ export async function POST(request) {
 
     await prisma.aprobacion.createMany({ data: aprobaciones });
 
-    // =====================================
-    // 🔹 Determinar destinatarios del correo
-    // =====================================
+    // Determina los destinatarios del correo según el tipo de visita
     let destinatarios = [];
-
     if (body.requiereAvion === true) {
-      // Vicepresidencia del área correspondiente
       const vp = await prisma.user.findFirst({
         where: { role: "vicepresidente", department: nuevaVisita.area },
       });
       if (vp) destinatarios = [vp.email];
-
     } else if (body.fondos_fabrica === true) {
-      // Director de Activos Operativos
       const director = await prisma.user.findFirst({
         where: { role: "notas_credito" },
       });
       if (director) destinatarios = [director.email];
-
     } else {
-      // Suministros Internos
       const suministros = await prisma.user.findMany({
         where: { position: { contains: "Internal Supply" } },
       });
       destinatarios = suministros.map((s) => s.email);
     }
 
-    // ==============================
-    // 🔹 Plantilla del correo de aviso
-    // ==============================
+    // Construye el cuerpo HTML del correo de notificación
     const html = getTemplate("agendar", {
       usuario: usuario.name,
       cliente: nuevaVisita.cliente,
@@ -239,7 +237,7 @@ export async function POST(request) {
       fondos_fabrica: nuevaVisita.fondos_fabrica,
     });
 
-    // 🔹 Enviar correo a los destinatarios
+    // Envía el correo de aviso a los responsables
     if (destinatarios.length > 0) {
       try {
         await fetch(`${request.nextUrl.origin}/api/send-mail`, {
@@ -252,10 +250,10 @@ export async function POST(request) {
           }),
         });
       } catch (mailError) {
-        console.error("⚠️ Error al llamar a /api/send-mail:", mailError);
+        console.error("Error al enviar correo:", mailError);
       }
     } else {
-      console.warn("⚠️ No se encontraron destinatarios para esta visita");
+      console.warn("No se encontraron destinatarios para esta visita");
     }
 
     return NextResponse.json(nuevaVisita, { status: 201 });

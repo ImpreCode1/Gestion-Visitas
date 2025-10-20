@@ -1,14 +1,22 @@
+/**
+ * @fileoverview Endpoint para registrar el rechazo de una aprobación.
+ * Actualiza el estado de la aprobación y la visita asociada, y notifica al gerente por correo electrónico.
+ */
+
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoVisita } from "@prisma/client";
-import getTemplate from "../../../../../lib/emails"; // 👈 ajusta la ruta según tu proyecto
+import getTemplate from "../../../../../lib/emails"; // Ajustar la ruta según la estructura del proyecto
 
+// Inicializa Prisma Client
 const prisma = new PrismaClient();
 
 export async function POST(req, { params }) {
   try {
+    // Obtiene el comentario del cuerpo de la solicitud
     const { comentario } = await req.json();
 
-    // 1️⃣ Actualizamos la aprobación e incluimos la visita con gerente y aprobaciones
+    // Actualiza la aprobación específica, marcándola como rechazada
+    // e incluye la información de la visita, el gerente y todas las aprobaciones relacionadas
     const aprobacion = await prisma.aprobacion.update({
       where: { id: parseInt(params.id) },
       data: {
@@ -29,9 +37,9 @@ export async function POST(req, { params }) {
     const visita = aprobacion.visita;
     const aprobaciones = visita.aprobaciones;
 
-    // 2️⃣ Regla de negocio: si alguna aprobación está rechazada, la visita queda rechazada
+    // Si alguna de las aprobaciones de la visita está rechazada,
+    // se actualiza el estado general de la visita como "rechazada"
     const algunaRechazada = aprobaciones.some((a) => a.estado === "rechazado");
-
     if (algunaRechazada) {
       await prisma.visita.update({
         where: { id: visita.id },
@@ -39,7 +47,7 @@ export async function POST(req, { params }) {
       });
     }
 
-    // 3️⃣ Generamos el HTML del correo
+    // Genera el cuerpo HTML del correo usando la plantilla correspondiente
     const html = getTemplate("rechazar", {
       usuario: visita.gerente.name,
       cliente: visita.cliente,
@@ -49,7 +57,7 @@ export async function POST(req, { params }) {
       comentario,
     });
 
-    // 4️⃣ Enviamos el correo al gerente
+    // Envía el correo de notificación al gerente informando el rechazo
     await fetch(`${req.nextUrl.origin}/api/send-mail`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,9 +68,14 @@ export async function POST(req, { params }) {
       }),
     });
 
+    // Retorna la aprobación actualizada como respuesta
     return NextResponse.json(aprobacion);
   } catch (err) {
-    console.error("❌ Error en /rechazar:", err);
-    return NextResponse.json({ error: "Error al rechazar" }, { status: 500 });
+    // Captura y registra errores en consola
+    console.error("Error en /rechazar:", err);
+    return NextResponse.json(
+      { error: "Error al rechazar" },
+      { status: 500 }
+    );
   }
 }

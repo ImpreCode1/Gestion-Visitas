@@ -1,24 +1,36 @@
+/**
+ * @fileoverview Endpoints para la gestión individual de usuarios.
+ * Incluye la obtención de un usuario por ID (ignorando los eliminados) 
+ * y la actualización de sus datos en la base de datos.
+ */
+
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-// ✅ Inicializamos Prisma y lo almacenamos en globalThis para evitar múltiples instancias en desarrollo
+// Inicializamos Prisma y lo almacenamos globalmente para evitar múltiples instancias en modo desarrollo
 const prisma = globalThis.__prismaClient || new PrismaClient();
 if (!globalThis.__prismaClient) globalThis.__prismaClient = prisma;
 
-// ==============================
-// GET user by ID (ignora eliminados)
-// ==============================
+/**
+ * Obtiene un usuario por su ID, siempre que no esté marcado como eliminado.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP.
+ * @param {Object} params - Parámetros de la ruta.
+ * @param {string} params.id - ID del usuario a consultar.
+ * @returns {Promise<Response>} Respuesta JSON con el usuario encontrado o un mensaje de error.
+ */
 export async function GET(request, { params }) {
   const { id } = await params;
   const userId = parseInt(id, 10);
 
-  // Validación del ID
+  // Validación básica del ID
   if (Number.isNaN(userId)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
   try {
-    // Buscar el usuario por ID, ignorando los eliminados (deletedAt != null)
+    // Busca el usuario por ID, ignorando los eliminados (deletedAt != null)
     const user = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
     });
@@ -29,36 +41,49 @@ export async function GET(request, { params }) {
     return NextResponse.json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
-// ==============================
-// PUT user by ID (actualización)
-// ==============================
+/**
+ * Actualiza los datos de un usuario específico por su ID.
+ * Ignora el campo `id` en el cuerpo de la petición para evitar errores de modificación de clave primaria.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP con los datos a actualizar.
+ * @param {Object} params - Parámetros de la ruta.
+ * @param {string} params.id - ID del usuario a actualizar.
+ * @returns {Promise<Response>} Respuesta JSON con el usuario actualizado o un mensaje de error.
+ */
 export async function PUT(request, { params }) {
   const { id } = await params;
   const userId = parseInt(id, 10);
 
-  // Validación del ID
+  // Validación básica del ID
   if (Number.isNaN(userId)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
   const data = await request.json();
-  // Evitamos que actualicen el ID por error
-  delete data.id;
+  delete data.id; // Evita la modificación del ID
 
   try {
-    // Actualizamos el usuario con los datos proporcionados
+    // Actualiza el usuario en la base de datos
     const user = await prisma.user.update({ where: { id: userId }, data });
     return NextResponse.json(user);
   } catch (error) {
     console.error("Error updating user:", error);
 
+    // Error Prisma P2025 → registro no encontrado
     if (error?.code === "P2025")
       return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
