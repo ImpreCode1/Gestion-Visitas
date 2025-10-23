@@ -213,7 +213,7 @@ export default function MisVisitas() {
                   <th className="p-2">Fechas</th>
                   <th className="p-2">Persona</th>
                   <th className="p-2">Estado</th>
-                  <th className="p-2">Aprobaciones</th>
+                  <th className="p-2">Gestiones</th>
                   <th className="p-2">Facturas</th>
                 </tr>
               </thead>
@@ -317,7 +317,7 @@ export default function MisVisitas() {
                   {/* Aprobaciones */}
                   <div className="mt-2">
                     <h4 className="text-xs font-bold text-gray-600">
-                      Aprobaciones:
+                      Gestiones:
                     </h4>
                     {v.aprobaciones?.length ? (
                       <ul className="text-xs space-y-1">

@@ -115,6 +115,8 @@ export default function AgendarVisitaPage() {
       });
     } catch (err) {
       alert("❌ " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
