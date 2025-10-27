@@ -98,18 +98,62 @@ export default function AgendarVisitaPage() {
 
       // ✅ Popup de éxito
       await Swal.fire({
-        title: "¡Visita registrada!",
-        text: "La solicitud se ha enviado correctamente.",
+        title: "¡Visita registrada exitosamente!",
+        html: `
+    <div style="
+      text-align: left;
+      font-size: 14px;
+      color: #374151;
+      margin-top: 10px;
+      line-height: 1.5;
+    ">
+      <p><strong>Cliente:</strong> ${formData.cliente}</p>
+      <p><strong>Ciudad de origen:</strong> ${formData.ciudad_origen}</p>
+      <p><strong>Ciudad destino:</strong> ${formData.ciudad}</p>
+      <p><strong>Motivo:</strong> ${formData.motivo}</p>
+      <p><strong>Fecha de salida:</strong> ${new Date(
+        formData.fecha_ida
+      ).toLocaleString("es-CO")}</p>
+      <p><strong>Fecha de regreso:</strong> ${new Date(
+        formData.fecha_regreso
+      ).toLocaleString("es-CO")}</p>
+      <hr style="margin: 12px 0; border: 0; border-top: 1px solid #e5e7eb;" />
+      <p style="font-size: 13px; color: #6b7280;">
+        ✈️ ${
+          formData.requiereAvion
+            ? "Incluye transporte aéreo"
+            : "No requiere transporte aéreo"
+        }<br />
+        💰 ${
+          formData.fondos_fabrica
+            ? "Financiada con fondos de fábrica"
+            : "Sin fondos de fábrica asignados"
+        }
+      </p>
+    </div>
+  `,
         icon: "success",
-        confirmButtonText: "Aceptar",
+        confirmButtonText: "Entendido",
         confirmButtonColor: "#2563EB", // azul Tailwind 600
         background: "#f9fafb",
         color: "#111827",
         iconColor: "#22c55e",
+        showClass: {
+          popup: `
+      animate__animated
+      animate__fadeInDown
+    `,
+        },
+        hideClass: {
+          popup: `
+      animate__animated
+      animate__fadeOutUp
+    `,
+        },
         customClass: {
-          popup: "rounded-xl shadow-lg",
-          title: "text-lg font-semibold",
-          confirmButton: "rounded-md px-5 py-2",
+          popup: "rounded-2xl shadow-lg px-6 py-4",
+          title: "text-lg font-semibold text-gray-800",
+          confirmButton: "rounded-md px-5 py-2 font-medium",
         },
       });
 
@@ -271,9 +315,17 @@ export default function AgendarVisitaPage() {
               <input
                 name="oportunidadCRM"
                 value={formData.oportunidadCRM}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Permite solo números enteros positivos (o vacío)
+                  if (/^\d*$/.test(value)) {
+                    setFormData({ ...formData, oportunidadCRM: value });
+                  }
+                }}
                 placeholder="Número de oportunidad CRM (opcional)"
                 className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
             </div>
           </section>
@@ -389,9 +441,6 @@ export default function AgendarVisitaPage() {
               <div className="flex items-center justify-between py-2 group relative">
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                   ¿Requiere avión?
-                  <span className="text-gray-400 text-xs cursor-help group-hover:text-blue-500">
-                    ✈️
-                  </span>
                   <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
                     Actívalo si el viaje requiere transporte aéreo.
                   </div>
@@ -420,9 +469,6 @@ export default function AgendarVisitaPage() {
               <div className="flex items-center justify-between py-2 group relative">
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                   ¿Fondos de fábrica?
-                  <span className="text-gray-400 text-xs cursor-help group-hover:text-blue-500">
-                    💰
-                  </span>
                   <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
                     Indica si la visita será cubierta con fondos de fábrica.
                   </div>

@@ -185,7 +185,11 @@ export async function POST(request) {
 
     if (body.requiereAvion === true) {
       aprobaciones = [
-        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente" },
+        {
+          visitaId: nuevaVisita.id,
+          rol: "vicepresidencia",
+          estado: "pendiente",
+        },
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
@@ -200,7 +204,10 @@ export async function POST(request) {
     }
 
     await prisma.aprobacion.createMany({ data: aprobaciones });
-    console.log("🗂️ Aprobaciones creadas:", aprobaciones.map((a) => a.rol));
+    console.log(
+      "🗂️ Aprobaciones creadas:",
+      aprobaciones.map((a) => a.rol)
+    );
 
     // Determinar destinatarios de correo
     let destinatarios = [];
@@ -217,7 +224,7 @@ export async function POST(request) {
       if (director) destinatarios = [director.email];
     } else {
       const transporte = await prisma.user.findMany({
-        where: { role: "transporte" },
+        where: { role: "aprobador", tipoaprobador: "suministros" },
       });
       destinatarios = transporte.map((t) => t.email);
     }
@@ -243,15 +250,18 @@ export async function POST(request) {
     // Enviar correo
     if (destinatarios.length > 0) {
       try {
-        const response = await fetch(`${request.nextUrl.origin}/api/send-mail`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: destinatarios,
-            subject: "Nueva solicitud de visita registrada",
-            html,
-          }),
-        });
+        const response = await fetch(
+          `${request.nextUrl.origin}/api/send-mail`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: destinatarios,
+              subject: "Nueva solicitud de visita registrada",
+              html,
+            }),
+          }
+        );
 
         if (!response.ok) {
           console.error("❌ Error al enviar correo:", await response.text());
