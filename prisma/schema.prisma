@@ -41,7 +41,14 @@ model Visita {
   contacto      String?
   telefono      String?
   personaVisita String?
-  motivo        String
+
+  // Datos de la visita
+  tipoVisita   TipoVisita @default(por_definir)
+  otroTipo     String?
+  motivo       String       // breve descripción del motivo ("reunión con cliente", "almuerzo", etc.)
+  descripcion  String?      // detalle adicional de la visita
+  proposito    String?      // objetivo comercial o técnico
+  oportunidadCRM String?    // vinculación con CRM
 
   ciudad_origen  String
   fecha_ida      DateTime
@@ -53,6 +60,12 @@ model Visita {
   gastos_viaje   String
   fondos_fabrica Boolean      @default(false)
 
+  // Gastos asociados
+  tiquetes       Float?
+  alojamiento    Float?
+  alimentacion   Float?
+  otros_gastos   Float?
+
   // Relaciones
   facturas     Factura?
   aprobaciones Aprobacion[]
@@ -60,6 +73,7 @@ model Visita {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 
 model Factura {
   id          Int              @id @default(autoincrement())
@@ -118,4 +132,8 @@ enum RolAprobacion {
   tiquetes
   transporte
   notas_credito
+}
+
+enum TipoVisita {
+  por_definir
 }

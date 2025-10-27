@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import { Building2, ClipboardList, Plane, MapPin } from "lucide-react";
+import Swal from "sweetalert2";
 
 function getLocalDateTimeNow() {
   const now = new Date();
-  now.setSeconds(0, 0); // limpiar segundos/ms
+  now.setSeconds(0, 0);
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -22,16 +24,20 @@ export default function AgendarVisitaPage() {
     contacto: "",
     telefono: "",
     personaVisita: "",
+
+    tipoVisita: "por_definir",
+    otroTipo: "",
+    motivo: "",
+    descripcion: "",
+    proposito: "",
+
+    ciudad_origen: "",
     fecha_ida: "",
     fecha_regreso: "",
     lugar: "",
-    motivo: "",
-    tiquetes: "",
-    viaticos: "",
-    otrosGastos: "",
     requiereAvion: false,
     fondos_fabrica: false,
-    ciudad_origen: "",
+    oportunidadCRM: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -50,36 +56,35 @@ export default function AgendarVisitaPage() {
     setLoading(true);
 
     const hoy = new Date();
-    hoy.setSeconds(0, 0); // limpiar segundos/ms para comparar mejor
+    hoy.setSeconds(0, 0);
 
-    if (formData.fecha_ida) {
-      const fechaIda = new Date(formData.fecha_ida);
-      if (fechaIda < hoy) {
-        alert("❌ La fecha de ida no puede ser anterior al día actual");
+    // 🧭 Validación de fechas
+    if (formData.fecha_ida && new Date(formData.fecha_ida) < hoy) {
+      alert("❌ La fecha de ida no puede ser anterior al día actual");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.fecha_ida && formData.fecha_regreso) {
+      const ida = new Date(formData.fecha_ida);
+      const regreso = new Date(formData.fecha_regreso);
+      if (regreso < ida) {
+        alert("❌ La fecha de regreso no puede ser anterior a la de ida");
         setLoading(false);
         return;
       }
     }
 
-    if (formData.fecha_ida && formData.fecha_regreso) {
-      const fechaIda = new Date(formData.fecha_ida);
-      const fechaRegreso = new Date(formData.fecha_regreso);
-
-      if (fechaRegreso < fechaIda) {
-        alert("❌ La fecha de regreso no puede ser anterior a la fecha de ida");
-        setLoading(false);
-        return;
-      }
-    }
-
-    if (formData.fecha_ida && formData.fecha_regreso) {
-      const fechaIda = new Date(formData.fecha_ida);
-      const fechaRegreso = new Date(formData.fecha_regreso);
-
-      if (fechaRegreso < fechaIda) {
-        alert("❌ La fecha de regreso no puede ser anterior a la fecha de ida");
-        return;
-      }
+    // 🧩 Validación tipo de visita
+    if (
+      formData.tipoVisita === "otros" &&
+      formData.otroTipo.trim().length < 10
+    ) {
+      alert(
+        "❌ Si seleccionas 'Otros', debes especificar un tipo con al menos 10 caracteres"
+      );
+      setLoading(false);
+      return;
     }
 
     try {
@@ -89,10 +94,26 @@ export default function AgendarVisitaPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Error al registrar visita");
+      if (!res.ok) throw new Error("Error al registrar la visita");
 
-      alert("✅ Visita registrada correctamente");
+      // ✅ Popup de éxito
+      await Swal.fire({
+        title: "¡Visita registrada!",
+        text: "La solicitud se ha enviado correctamente.",
+        icon: "success",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#2563EB", // azul Tailwind 600
+        background: "#f9fafb",
+        color: "#111827",
+        iconColor: "#22c55e",
+        customClass: {
+          popup: "rounded-xl shadow-lg",
+          title: "text-lg font-semibold",
+          confirmButton: "rounded-md px-5 py-2",
+        },
+      });
 
+      // 🔄 Reset form
       setFormData({
         clienteCodigo: "",
         cliente: "",
@@ -102,335 +123,352 @@ export default function AgendarVisitaPage() {
         contacto: "",
         telefono: "",
         personaVisita: "",
+        tipoVisita: "por_definir",
+        otroTipo: "",
+        motivo: "",
+        descripcion: "",
+        proposito: "",
+        ciudad_origen: "",
         fecha_ida: "",
         fecha_regreso: "",
         lugar: "",
-        motivo: "",
-        tiquetes: "",
-        viaticos: "",
-        otrosGastos: "",
         requiereAvion: false,
         fondos_fabrica: false,
-        ciudad_origen: "",
+        oportunidadCRM: "",
       });
     } catch (err) {
-      alert("❌ " + err.message);
+      console.error("Error al registrar visita:", err);
+
+      // ❌ Popup de error
+      Swal.fire({
+        title: "Error",
+        text: err.message || "No se pudo registrar la visita.",
+        icon: "error",
+        confirmButtonText: "Cerrar",
+        confirmButtonColor: "#DC2626", // rojo Tailwind 600
+        background: "#fef2f2",
+        color: "#7f1d1d",
+        customClass: {
+          popup: "rounded-xl shadow-lg",
+          title: "text-lg font-semibold",
+          confirmButton: "rounded-md px-5 py-2",
+        },
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="bg-white shadow-lg rounded-xl w-full max-w-3xl p-6 sm:p-8">
-        {/* Título principal */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-8 text-center">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4 py-6">
+      <div className="bg-white shadow-lg rounded-xl w-full max-w-3xl p-8 border border-gray-100">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
           Agendar nueva visita
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* 🔹 Datos del Cliente */}
-          <section className="bg-gray-50 p-5 rounded-lg shadow-sm space-y-6">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
-              Datos del cliente
-            </h3>
+          <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Building2 className="w-5 h-5 text-blue-500" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Datos del cliente
+              </h3>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                type="text"
-                name="clienteCodigo"
-                value={formData.clienteCodigo}
+              {[
+                ["clienteCodigo", "Código del cliente"],
+                ["cliente", "Nombre del cliente"],
+                ["ciudad", "Ciudad"],
+                ["pais", "País"],
+                ["direccion", "Dirección"],
+                ["contacto", "Persona de contacto"],
+                ["telefono", "Teléfono"],
+                ["personaVisita", "Persona a visitar"],
+              ].map(([name, placeholder]) => (
+                <input
+                  key={name}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  placeholder={placeholder}
+                  className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
+                  required={
+                    ["pais", "contacto", "telefono"].includes(name)
+                      ? false
+                      : true
+                  }
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* 🔹 Información de la Visita */}
+          <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <ClipboardList className="w-5 h-5 text-blue-500" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Información de la visita
+              </h3>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de visita
+              </label>
+              <select
+                name="tipoVisita"
+                value={formData.tipoVisita}
                 onChange={handleChange}
-                placeholder="ID o código del cliente"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
+                className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                required
+              >
+                <option value="por_definir">Seleccione un tipo</option>
+                <option value="comercial">Comercial</option>
+                <option value="tecnica">Técnica</option>
+                <option value="capacitacion">Capacitación</option>
+                <option value="auditoria">Auditoría</option>
+                <option value="otros">Otros</option>
+              </select>
+
+              {formData.tipoVisita === "otros" && (
+                <input
+                  type="text"
+                  name="otroTipo"
+                  value={formData.otroTipo}
+                  onChange={handleChange}
+                  placeholder="Especificar tipo de visita (mínimo 10 caracteres)"
+                  className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full mt-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  required
+                />
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                name="motivo"
+                value={formData.motivo}
+                onChange={handleChange}
+                placeholder="Motivo de la visita (ej: almuerzo, reunión técnica...)"
+                className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                 required
               />
-              <input
-                type="text"
-                name="cliente"
-                value={formData.cliente}
+              <textarea
+                name="descripcion"
+                value={formData.descripcion}
                 onChange={handleChange}
-                placeholder="Nombre del cliente"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                required
+                placeholder="Descripción detallada de la visita"
+                rows={2}
+                className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
               <input
-                type="text"
-                name="ciudad"
-                value={formData.ciudad}
+                name="proposito"
+                value={formData.proposito}
                 onChange={handleChange}
-                placeholder="Ciudad"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                required
+                placeholder="Propósito (ej: presentación de producto, negociación...)"
+                className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
               <input
-                type="text"
-                name="pais"
-                value={formData.pais}
+                name="oportunidadCRM"
+                value={formData.oportunidadCRM}
                 onChange={handleChange}
-                placeholder="País"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-              />
-              <input
-                type="text"
-                name="direccion"
-                value={formData.direccion}
-                onChange={handleChange}
-                placeholder="Dirección"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                required
-              />
-              <input
-                type="text"
-                name="contacto"
-                value={formData.contacto}
-                onChange={handleChange}
-                placeholder="Persona de contacto"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-              />
-              <input
-                type="tel"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                placeholder="Teléfono"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-              />
-              <input
-                type="text"
-                name="personaVisita"
-                value={formData.personaVisita}
-                onChange={handleChange}
-                placeholder="Persona a visitar"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
+                placeholder="Número de oportunidad CRM (opcional)"
+                className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
             </div>
           </section>
 
-          {/* 🔹 Información de la visita */}
-          <section className="bg-gray-50 p-5 rounded-lg shadow-sm space-y-6">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
-              Información de la visita
-            </h3>
+          {/* 🔹 Logística */}
+          <section className="bg-white p-6 rounded-xl shadow-md border border-gray-100 space-y-6">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <MapPin className="w-5 h-5 text-blue-500" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Logística del viaje
+              </h3>
+            </div>
 
-            {/* ✅ Fondos de fábrica */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Fondos de fábrica
-              </label>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border rounded-lg bg-white">
-                <span className="text-gray-600 text-sm mb-2 sm:mb-0">
-                  {formData.fondos_fabrica
-                    ? "Los gastos los cubre el cliente/fábrica"
-                    : "Los gastos los cubre Impresistem"}
-                </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Ciudad de origen */}
+              <div className="relative">
+                <label
+                  htmlFor="ciudad_origen"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Ciudad de origen
+                </label>
+                <div className="relative">
+                  <select
+                    id="ciudad_origen"
+                    name="ciudad_origen"
+                    value={formData.ciudad_origen}
+                    onChange={handleChange}
+                    className="appearance-none w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 pl-3 pr-10 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecciona una ciudad</option>
+                    <option value="Bogotá">Bogotá</option>
+                    <option value="Medellín">Medellín</option>
+                    <option value="Cali">Cali</option>
+                    <option value="Barranquilla">Barranquilla</option>
+                    <option value="Bucaramanga">Bucaramanga</option>
+                    <option value="Pereira">Pereira</option>
+                    <option value="Villavicencio">Villavicencio</option>
+                    <option value="Cartagena">Cartagena</option>
+                    <option value="Manizales">Manizales</option>
+                    <option value="Neiva">Neiva</option>
+                  </select>
+
+                  <svg
+                    className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Lugar */}
+              <div>
+                <label
+                  htmlFor="lugar"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Lugar de visita
+                </label>
+                <input
+                  id="lugar"
+                  name="lugar"
+                  value={formData.lugar}
+                  onChange={handleChange}
+                  placeholder="Oficina, planta, sucursal, etc."
+                  className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
+                />
+              </div>
+
+              {/* Fechas */}
+              {[
+                ["fecha_ida", "Fecha de salida", getLocalDateTimeNow()],
+                [
+                  "fecha_regreso",
+                  "Fecha de regreso",
+                  formData.fecha_ida || getLocalDateTimeNow(),
+                ],
+              ].map(([name, label, min]) => (
+                <div key={name}>
+                  <label
+                    htmlFor={name}
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {label}
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id={name}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    min={min}
+                    className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Switches con tooltips */}
+            <div className="space-y-3">
+              {/* Requiere avión */}
+              <div className="flex items-center justify-between py-2 group relative">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                  ¿Requiere avión?
+                  <span className="text-gray-400 text-xs cursor-help group-hover:text-blue-500">
+                    ✈️
+                  </span>
+                  <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
+                    Actívalo si el viaje requiere transporte aéreo.
+                  </div>
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      requiereAvion: !formData.requiereAvion,
+                    })
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    formData.requiereAvion ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      formData.requiereAvion ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Fondos de fábrica */}
+              <div className="flex items-center justify-between py-2 group relative">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                  ¿Fondos de fábrica?
+                  <span className="text-gray-400 text-xs cursor-help group-hover:text-blue-500">
+                    💰
+                  </span>
+                  <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
+                    Indica si la visita será cubierta con fondos de fábrica.
+                  </div>
+                </label>
                 <button
                   type="button"
                   onClick={() =>
                     setFormData({
                       ...formData,
                       fondos_fabrica: !formData.fondos_fabrica,
-                      requiereAvion: false,
                     })
                   }
-                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
-                    formData.fondos_fabrica ? "bg-green-600" : "bg-gray-300"
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    formData.fondos_fabrica ? "bg-blue-600" : "bg-gray-300"
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                       formData.fondos_fabrica
-                        ? "translate-x-5"
+                        ? "translate-x-6"
                         : "translate-x-1"
                     }`}
                   />
                 </button>
               </div>
             </div>
-
-            {/* ✅ Ciudad de origen */}
-            <div className="space-y-1">
-              <label
-                htmlFor="ciudad_origen"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Ciudad de origen
-              </label>
-              <select
-                id="ciudad_origen"
-                name="ciudad_origen"
-                value={formData.ciudad_origen}
-                onChange={handleChange}
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                required
-              >
-                <option value="">Selecciona una ciudad</option>
-                <option value="Leticia">Leticia</option>
-                <option value="Bello">Bello</option>
-                <option value="Envigado">Envigado</option>
-                <option value="Itagüí">Itagüí</option>
-                <option value="Medellín">Medellín</option>
-                <option value="Puerto Berrío">Puerto Berrío</option>
-                <option value="Arauca">Arauca</option>
-                <option value="Barranquilla">Barranquilla</option>
-                <option value="Soledad">Soledad</option>
-                <option value="Bogotá">Bogotá</option>
-                <option value="Girardot">Girardot</option>
-                <option value="Cartagena">Cartagena</option>
-                <option value="Magangué">Magangué</option>
-                <option value="Duitama">Duitama</option>
-                <option value="Sogamoso">Sogamoso</option>
-                <option value="Tunja">Tunja</option>
-                <option value="Manizales">Manizales</option>
-                <option value="Florencia">Florencia</option>
-                <option value="Yopal">Yopal</option>
-                <option value="Popayán">Popayán</option>
-                <option value="Sevilla">Sevilla</option>
-                <option value="Valledupar">Valledupar</option>
-                <option value="Quibdó">Quibdó</option>
-                <option value="Montería">Montería</option>
-                <option value="Guainía">Guainía</option>
-                <option value="Guaviare">Guaviare</option>
-                <option value="San José del Guaviare">
-                  San José del Guaviare
-                </option>
-                <option value="Neiva">Neiva</option>
-                <option value="Ríohacha">Ríohacha</option>
-                <option value="El Banco">El Banco</option>
-                <option value="Ciénaga">Ciénaga</option>
-                <option value="Santa Marta">Santa Marta</option>
-                <option value="Villavicencio">Villavicencio</option>
-                <option value="Ipiales">Ipiales</option>
-                <option value="Pasto">Pasto</option>
-                <option value="Tumaco">Tumaco</option>
-                <option value="Cúcuta">Cúcuta</option>
-                <option value="Ocaña">Ocaña</option>
-                <option value="Pamplona">Pamplona</option>
-                <option value="Mocoa">Mocoa</option>
-                <option value="Armenia">Armenia</option>
-                <option value="Calarcá">Calarcá</option>
-                <option value="Pereira">Pereira</option>
-                <option value="Santa Rosa de Cabal">Santa Rosa de Cabal</option>
-                <option value="San Andrés y Providencia">
-                  San Andrés y Providencia
-                </option>
-                <option value="Barrancabermeja">Barrancabermeja</option>
-                <option value="Bucaramanga">Bucaramanga</option>
-                <option value="Sincelejo">Sincelejo</option>
-                <option value="Ibagué">Ibagué</option>
-                <option value="Buenaventura">Buenaventura</option>
-                <option value="Buga">Buga</option>
-                <option value="Cali">Cali</option>
-                <option value="Palmira">Palmira</option>
-                <option value="Tuluá">Tuluá</option>
-                <option value="Puerto Carreño">Puerto Carreño</option>
-              </select>
-            </div>
-
-            {/* ✅ Fechas y lugar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label
-                  htmlFor="fecha_ida"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Fecha y hora de ida
-                </label>
-                <input
-                  type="datetime-local"
-                  id="fecha_ida"
-                  name="fecha_ida"
-                  value={formData.fecha_ida}
-                  onChange={handleChange}
-                  min={getLocalDateTimeNow()} // ahora sí funciona en local
-                  className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  htmlFor="fecha_regreso"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Fecha y hora de regreso
-                </label>
-                <input
-                  type="datetime-local"
-                  id="fecha_regreso"
-                  name="fecha_regreso"
-                  value={formData.fecha_regreso}
-                  onChange={handleChange}
-                  min={formData.fecha_ida || getLocalDateTimeNow()} // mínimo la fecha de ida
-                  className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                  required
-                />
-              </div>
-              <input
-                type="text"
-                name="lugar"
-                value={formData.lugar}
-                onChange={handleChange}
-                placeholder="Lugar (oficina, sucursal, etc.)"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-              />
-              <input
-                type="text"
-                name="motivo"
-                value={formData.motivo}
-                onChange={handleChange}
-                placeholder="Motivo de la visita"
-                className="border p-2.5 rounded-lg w-full text-sm focus:ring focus:ring-blue-200"
-                required
-              />
-            </div>
-
-            {/* ✅ Requiere avión */}
-            {!formData.fondos_fabrica && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  ¿La visita requiere tiquetes aéreos?
-                </label>
-                <div className="flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
-                  <span className="text-gray-600 text-sm">
-                    {formData.requiereAvion
-                      ? "Sí, requiere avión"
-                      : "No, no requiere avión"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        requiereAvion: !formData.requiereAvion,
-                      })
-                    }
-                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
-                      formData.requiereAvion ? "bg-blue-600" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        formData.requiereAvion
-                          ? "translate-x-5"
-                          : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
           </section>
 
-          {/* 🔹 Botón */}
-          <div className="flex justify-center">
+          {/* Botón final */}
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
               disabled={loading}
-              className={`${
+              className={`flex items-center justify-center gap-2 text-white font-medium px-8 py-3 rounded-lg shadow-md transition-all w-full sm:w-auto transform active:scale-95 ${
                 loading
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
-              } text-white font-medium px-8 py-3 rounded-lg shadow-md transition-all w-full sm:w-auto`}
+              }`}
             >
+              <Plane
+                className={`w-5 h-5 transition-all duration-500 ${
+                  loading
+                    ? "animate-spin text-white"
+                    : "text-white group-hover:translate-x-1"
+                }`}
+              />
               {loading ? "Agendando..." : "Agendar visita"}
             </button>
           </div>

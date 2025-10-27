@@ -121,28 +121,24 @@ export async function GET(request) {
 
 /**
  * Registra una nueva visita asociada al usuario autenticado.
- * Crea las aprobaciones correspondientes según el tipo de viaje (avión, fondos de fábrica, o transporte)
- * y notifica por correo electrónico a los responsables del flujo de aprobación.
- *
- * @async
- * @param {Request} request - Objeto de la solicitud HTTP con los datos de la visita.
- * @returns {Promise<Response>} Respuesta JSON con la visita creada o un mensaje de error.
+ * Crea las aprobaciones según el tipo de viaje (avión, fondos de fábrica o terrestre)
+ * y notifica por correo electrónico a los responsables correspondientes.
  */
 export async function POST(request) {
   const token = request.cookies.get("token")?.value;
   if (!token) {
+    console.error("❌ Error: No se encontró el token en las cookies.");
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   try {
-    // Verifica token y obtiene el email y área del usuario
+    // Verificar token y obtener datos del usuario
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    const email = payload.email;
-    const area = payload.department;
+    const { email, department: area } = payload;
 
-    // Busca el usuario en la base de datos
     const usuario = await prisma.user.findUnique({ where: { email } });
     if (!usuario) {
+      console.error("❌ Error: Usuario no encontrado en base de datos:", email);
       return NextResponse.json(
         { error: "Usuario no encontrado" },
         { status: 404 }
@@ -150,8 +146,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
+    console.log("📩 Datos recibidos para nueva visita:", body);
 
-    // Crea la visita en base de datos
+    // Crear nueva visita
     const nuevaVisita = await prisma.visita.create({
       data: {
         gerente: { connect: { id: usuario.id } },
@@ -163,7 +160,12 @@ export async function POST(request) {
         contacto: body.contacto || "",
         telefono: body.telefono || "",
         personaVisita: body.personaVisita || "",
+        tipoVisita: body.tipoVisita || "por_definir",
+        otroTipo: body.otroTipo || null,
         motivo: body.motivo || "",
+        descripcion: body.descripcion || "",
+        proposito: body.proposito || "",
+        oportunidadCRM: body.oportunidadCRM || "",
         fecha_ida: new Date(body.fecha_ida),
         fecha_regreso: new Date(body.fecha_regreso),
         lugar: body.lugar || "",
@@ -176,23 +178,20 @@ export async function POST(request) {
       },
     });
 
-    // Crea las aprobaciones correspondientes según el tipo de visita
+    console.log("✅ Visita creada correctamente con ID:", nuevaVisita.id);
+
+    // Generar aprobaciones según el tipo de viaje
     let aprobaciones = [];
+
     if (body.requiereAvion === true) {
       aprobaciones = [
-        {
-          visitaId: nuevaVisita.id,
-          rol: "vicepresidencia",
-          estado: "pendiente",
-        },
+        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
     } else if (body.fondos_fabrica === true) {
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente" },
-        { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
-        { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
     } else {
       aprobaciones = [
@@ -201,9 +200,11 @@ export async function POST(request) {
     }
 
     await prisma.aprobacion.createMany({ data: aprobaciones });
+    console.log("🗂️ Aprobaciones creadas:", aprobaciones.map((a) => a.rol));
 
-    // Determina los destinatarios del correo según el tipo de visita
+    // Determinar destinatarios de correo
     let destinatarios = [];
+
     if (body.requiereAvion === true) {
       const vp = await prisma.user.findFirst({
         where: { role: "vicepresidente", department: nuevaVisita.area },
@@ -215,13 +216,15 @@ export async function POST(request) {
       });
       if (director) destinatarios = [director.email];
     } else {
-      const suministros = await prisma.user.findMany({
-        where: { position: { contains: "Internal Supply" } },
+      const transporte = await prisma.user.findMany({
+        where: { role: "transporte" },
       });
-      destinatarios = suministros.map((s) => s.email);
+      destinatarios = transporte.map((t) => t.email);
     }
 
-    // Construye el cuerpo HTML del correo de notificación
+    console.log("📧 Destinatarios del correo:", destinatarios);
+
+    // Construir plantilla del correo
     const html = getTemplate("agendar", {
       usuario: usuario.name,
       cliente: nuevaVisita.cliente,
@@ -237,28 +240,34 @@ export async function POST(request) {
       fondos_fabrica: nuevaVisita.fondos_fabrica,
     });
 
-    // Envía el correo de aviso a los responsables
+    // Enviar correo
     if (destinatarios.length > 0) {
       try {
-        await fetch(`${request.nextUrl.origin}/api/send-mail`, {
+        const response = await fetch(`${request.nextUrl.origin}/api/send-mail`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: destinatarios,
-            subject: "Una solicitud para una nueva visita ha sido registrada",
+            subject: "Nueva solicitud de visita registrada",
             html,
           }),
         });
+
+        if (!response.ok) {
+          console.error("❌ Error al enviar correo:", await response.text());
+        } else {
+          console.log("📨 Correo de notificación enviado correctamente");
+        }
       } catch (mailError) {
-        console.error("Error al enviar correo:", mailError);
+        console.error("❌ Error en envío de correo:", mailError);
       }
     } else {
-      console.warn("No se encontraron destinatarios para esta visita");
+      console.warn("⚠️ No se encontraron destinatarios para esta visita.");
     }
 
     return NextResponse.json(nuevaVisita, { status: 201 });
   } catch (error) {
-    console.error("Error al registrar visita:", error);
+    console.error("🔥 Error inesperado al registrar visita:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
