@@ -260,7 +260,7 @@ export default function FacturasPage() {
             {dentroDelPlazo && (
               <>
                 <p className="text-sm text-green-600 mb-6">
-                  ✅ Puedes subir tus facturas hasta el{" "}
+                  Puedes subir tus facturas hasta el{" "}
                   <strong>{formatFecha(fechaLimite)}</strong>.
                 </p>
 

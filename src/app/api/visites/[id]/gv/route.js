@@ -14,14 +14,12 @@ const prisma = new PrismaClient();
  * @async
  * @param {Request} req - Objeto de la solicitud HTTP con el campo `gastos_viaje` en el cuerpo JSON.
  * @param {Object} context - Contexto con los parámetros de la ruta.
- * @param {Object} context.params - Parámetros dinámicos de la URL.
- * @param {string} context.params.id - ID de la visita a actualizar.
+ * @param {Promise<{id: string}>} context.params - Promesa con los parámetros dinámicos de la URL.
  * @returns {Promise<Response>} Respuesta JSON con la visita actualizada o un mensaje de error.
  */
-export async function PATCH(req, context) {
+export async function PATCH(req, { params }) {
   try {
-    const { params } = await context;
-    const { id } = params;
+    const { id } = await params;
 
     // Extrae el valor de gastos_viaje del cuerpo de la solicitud
     const { gastos_viaje } = await req.json();

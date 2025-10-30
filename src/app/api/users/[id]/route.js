@@ -16,8 +16,8 @@ if (!globalThis.__prismaClient) globalThis.__prismaClient = prisma;
  *
  * @async
  * @param {Request} request - Objeto de la solicitud HTTP.
- * @param {Object} params - Parámetros de la ruta.
- * @param {string} params.id - ID del usuario a consultar.
+ * @param {Object} context - Contexto de la ruta.
+ * @param {Promise<{id: string}>} context.params - Promesa con los parámetros de la ruta.
  * @returns {Promise<Response>} Respuesta JSON con el usuario encontrado o un mensaje de error.
  */
 export async function GET(request, { params }) {
@@ -54,8 +54,8 @@ export async function GET(request, { params }) {
  *
  * @async
  * @param {Request} request - Objeto de la solicitud HTTP con los datos a actualizar.
- * @param {Object} params - Parámetros de la ruta.
- * @param {string} params.id - ID del usuario a actualizar.
+ * @param {Object} context - Contexto de la ruta.
+ * @param {Promise<{id: string}>} context.params - Promesa con los parámetros de la ruta.
  * @returns {Promise<Response>} Respuesta JSON con el usuario actualizado o un mensaje de error.
  */
 export async function PUT(request, { params }) {
