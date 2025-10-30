@@ -440,7 +440,7 @@ export default function AgendarVisitaPage() {
               {/* Requiere avión */}
               <div className="flex items-center justify-between py-2 group relative">
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                  ¿Requiere avión?
+                  ¿La visita requiere tiquetes aéreos?
                   <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
                     Actívalo si el viaje requiere transporte aéreo.
                   </div>
@@ -468,7 +468,7 @@ export default function AgendarVisitaPage() {
               {/* Fondos de fábrica */}
               <div className="flex items-center justify-between py-2 group relative">
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                  ¿Fondos de fábrica?
+                  ¿La visita cuenta con fondos de fábrica?
                   <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
                     Indica si la visita será cubierta con fondos de fábrica.
                   </div>
