@@ -41,6 +41,7 @@ export default function AgendarVisitaPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [alertaFecha, setAlertaFecha] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -48,6 +49,26 @@ export default function AgendarVisitaPage() {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+
+    if (name === "fecha_ida" && value) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaIda = new Date(value);
+      const diffMs = fechaIda - hoy;
+      const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDias < 5) {
+        setAlertaFecha(
+          "🚨 Aviso importante: La fecha de salida está programada con menos de 5 días de anticipación. Es posible que los viáticos no se alcancen a girar a tiempo."
+        );
+      } else if (diffDias < 15) {
+        setAlertaFecha(
+          "⚠️ Recordatorio: Según la política de viajes, las solicitudes deben realizarse con al menos 15 días de antelación para garantizar su aprobación oportuna."
+        );
+      } else {
+        setAlertaFecha("");
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -404,36 +425,63 @@ export default function AgendarVisitaPage() {
                   className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
                 />
               </div>
-
-              {/* Fechas */}
-              {[
-                ["fecha_ida", "Fecha de salida", getLocalDateTimeNow()],
-                [
-                  "fecha_regreso",
-                  "Fecha de regreso",
-                  formData.fecha_ida || getLocalDateTimeNow(),
-                ],
-              ].map(([name, label, min]) => (
-                <div key={name}>
-                  <label
-                    htmlFor={name}
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    {label}
-                  </label>
-                  <input
-                    type="datetime-local"
-                    id={name}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    min={min}
-                    className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
-                    required
-                  />
-                </div>
-              ))}
             </div>
+
+            {/* Fechas (en su propio bloque) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Fecha de salida */}
+              <div>
+                <label
+                  htmlFor="fecha_ida"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Fecha de salida
+                </label>
+                <input
+                  type="datetime-local"
+                  id="fecha_ida"
+                  name="fecha_ida"
+                  value={formData.fecha_ida}
+                  onChange={handleChange}
+                  min={getLocalDateTimeNow()}
+                  className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
+                  required
+                />
+              </div>
+
+              {/* Fecha de regreso */}
+              <div>
+                <label
+                  htmlFor="fecha_regreso"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Fecha de regreso
+                </label>
+                <input
+                  type="datetime-local"
+                  id="fecha_regreso"
+                  name="fecha_regreso"
+                  value={formData.fecha_regreso}
+                  onChange={handleChange}
+                  min={formData.fecha_ida || getLocalDateTimeNow()}
+                  className="border border-gray-300 bg-gray-50 p-2.5 rounded-lg w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm transition-all text-sm"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* 🟨 Cuadro de advertencia dinámico (debajo de ambas fechas) */}
+            {alertaFecha && (
+              <div
+                className={`mt-2 text-sm rounded-lg p-3 border transition-all ${
+                  alertaFecha.includes("viáticos")
+                    ? "bg-red-50 border-red-400 text-red-700"
+                    : "bg-yellow-50 border-yellow-400 text-yellow-700"
+                }`}
+              >
+                {alertaFecha}
+              </div>
+            )}
 
             {/* Switches con tooltips */}
             <div className="space-y-3">
