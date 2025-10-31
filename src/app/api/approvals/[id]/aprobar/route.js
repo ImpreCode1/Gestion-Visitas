@@ -1,25 +1,70 @@
 /**
  * @fileoverview Endpoint para registrar la aprobación de una solicitud de visita.
- * Actualiza el estado de la aprobación y la visita asociada, y envía notificaciones
- * por correo electrónico según el rol aprobador (vicepresidencia, notas de crédito o transporte).
+ * Soporta dos modos:
+ *  - Interno: aprobación desde el sistema autenticado (con comentario).
+ *  - Externo: aprobación directa desde link con token JWT (sin autenticación).
  */
 
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoVisita } from "@prisma/client";
+import { jwtVerify } from "jose";
 import getTemplate from "../../../../../lib/emails";
 
-// Inicializa Prisma Client
 const prisma = new PrismaClient();
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+
+export async function GET(req, context) {
+  // Reusar la misma lógica del POST
+  return await POST(req, context);
+}
 
 export async function POST(req, context) {
   try {
     const { params } = context;
-    const { comentario } = await req.json();
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
 
-    // Actualiza la aprobación marcada como aprobada y guarda el comentario
-    // Incluye los datos de la visita y del gerente asociado
+    let aprobacionId = parseInt(params.id);
+    let comentario = null;
+
+    // ==========================================================
+    // 🔐 1. Si viene con token (modo link público)
+    // ==========================================================
+    if (token) {
+      try {
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+        aprobacionId = payload.aprobacionId;
+
+        if (!aprobacionId) {
+          return NextResponse.json(
+            { error: "Token inválido o incompleto" },
+            { status: 400 }
+          );
+        }
+
+        console.log("🔗 Aprobación vía link público para ID:", aprobacionId);
+      } catch (error) {
+        console.error("❌ Token inválido o expirado:", error);
+        return NextResponse.json(
+          { error: "Token inválido o expirado" },
+          { status: 401 }
+        );
+      }
+    }
+
+    // ==========================================================
+    // 🧑‍💻 2. Si no hay token, asumimos aprobación desde el sistema interno
+    // ==========================================================
+    if (!token) {
+      const body = await req.json();
+      comentario = body.comentario || "";
+    }
+
+    // ==========================================================
+    // 3. Actualizar la aprobación
+    // ==========================================================
     const aprobacion = await prisma.aprobacion.update({
-      where: { id: parseInt(params.id) },
+      where: { id: aprobacionId },
       data: {
         estado: "aprobado",
         comentario,
@@ -32,12 +77,13 @@ export async function POST(req, context) {
 
     const visita = aprobacion.visita;
 
-    // Recarga todas las aprobaciones relacionadas con la misma visita
+    // ==========================================================
+    // 4. Cargar todas las aprobaciones relacionadas
+    // ==========================================================
     const aprobaciones = await prisma.aprobacion.findMany({
       where: { visitaId: visita.id },
     });
 
-    // Diccionario para traducir los roles técnicos a nombres legibles
     const roleMap = {
       vicepresidencia: "Vicepresidencia",
       tiquetes: "Compras Internas",
@@ -45,7 +91,6 @@ export async function POST(req, context) {
       notas_credito: "Director de Activos Operativos",
     };
 
-    // Recolecta comentarios de las aprobaciones existentes (si los hay)
     const comentarios = aprobaciones
       .filter((a) => a.comentario && a.comentario.trim() !== "")
       .map((a) => ({
@@ -53,7 +98,9 @@ export async function POST(req, context) {
         comentario: a.comentario,
       }));
 
-    // Helper para envío de correos a través del endpoint interno /api/send-mail
+    // ==========================================================
+    // Helper para envío de correos
+    // ==========================================================
     const sendMail = async ({ to, subject, html }) => {
       await fetch(`${req.nextUrl.origin}/api/send-mail`, {
         method: "POST",
@@ -63,12 +110,10 @@ export async function POST(req, context) {
     };
 
     // ==========================================================
-    // LÓGICA PRINCIPAL DE NOTIFICACIÓN SEGÚN EL ROL APROBADOR
+    // 5. Lógica según el rol aprobador (sin cambios)
     // ==========================================================
 
-    // Caso A — Vicepresidencia aprueba (viaje con avión)
     if (aprobacion.rol === "vicepresidencia") {
-      // Busca usuarios internos encargados de suministros y compras
       const usuariosInternos = await prisma.user.findMany({
         where: {
           OR: [
@@ -79,7 +124,6 @@ export async function POST(req, context) {
         select: { email: true },
       });
 
-      // Si existen usuarios internos, se les envía notificación
       const internos = usuariosInternos.map((u) => u.email);
       if (internos.length > 0) {
         const html = getTemplate("notificarSupplyProcurement", {
@@ -100,7 +144,6 @@ export async function POST(req, context) {
         });
       }
 
-      // Actualiza la visita como aprobada y notifica al gerente
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
@@ -122,9 +165,7 @@ export async function POST(req, context) {
       });
     }
 
-    // Caso B — Director de Activos Operativos aprueba (fondos de fábrica)
     else if (aprobacion.rol === "notas_credito") {
-      // Notifica a los usuarios internos de suministros y compras
       const usuariosInternos = await prisma.user.findMany({
         where: {
           OR: [
@@ -155,7 +196,6 @@ export async function POST(req, context) {
         });
       }
 
-      // Marca la visita como aprobada y avisa al gerente
       await prisma.visita.update({
         where: { id: visita.id },
         data: { estado: EstadoVisita.aprobada },
@@ -177,9 +217,7 @@ export async function POST(req, context) {
       });
     }
 
-    // Caso C — Suministros Internos aprueba (flujo sin avión ni fondos)
     else if (aprobacion.rol === "transporte") {
-      // Solo se notifica si esta aprobación es la única existente
       if (aprobaciones.length === 1) {
         await prisma.visita.update({
           where: { id: visita.id },
@@ -203,7 +241,6 @@ export async function POST(req, context) {
       }
     }
 
-    // Caso D — Todas las aprobaciones completadas (3 roles distintos)
     const todasAprobadas =
       aprobaciones.length >= 3 &&
       aprobaciones.every((a) => a.estado === "aprobado");
@@ -230,10 +267,17 @@ export async function POST(req, context) {
       });
     }
 
-    // Devuelve la aprobación actualizada como respuesta
+    // ==========================================================
+    // 6. Si vino desde el link, redirigir a una página de confirmación
+    // ==========================================================
+    if (token) {
+      return NextResponse.redirect(`${req.nextUrl.origin}/confirmacion?estado=aprobado`);
+    }
+
+    // Caso normal: devolver JSON
     return NextResponse.json(aprobacion);
+
   } catch (err) {
-    // Manejo global de errores
     console.error("Error al aprobar:", err);
     return NextResponse.json({ error: "Error al aprobar" }, { status: 500 });
   }

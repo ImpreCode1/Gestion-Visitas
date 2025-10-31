@@ -2,81 +2,158 @@
   style="
     font-family: Arial, sans-serif;
     color: #333;
-    max-width: 600px;
+    max-width: 640px;
     margin: auto;
+    background-color: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
   "
 >
-  <h2 style="color: #0056b3">📌 Nueva solicitud de visita registrada</h2>
-  <p>
-    Se ha registrado una nueva visita en la plataforma. A continuación, los
-    detalles:
-  </p>
+  <!-- Encabezado -->
+  <div
+    style="
+      background-color: #0056b3;
+      color: white;
+      padding: 16px 24px;
+      text-align: center;
+    "
+  >
+    <h2 style="margin: 0; font-size: 20px">📌 Nueva Solicitud de Visita Registrada</h2>
+  </div>
 
-  <table style="border-collapse: collapse; width: 100%; margin-top: 10px">
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Colaborador</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{usuario}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Cliente</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{cliente}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Ciudad Origen</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{ciudad_origen}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Ciudad Destino</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{ciudad}}, {{pais}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px">
-        <b>Persona a Visitar</b>
-      </td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{personaVisita}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Motivo</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{motivo}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Fecha Ida</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{fecha_ida}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Fecha Regreso</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{fecha_regreso}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px">
-        <b>Requiere tiquetes aéreos</b>
-      </td>
-      <td style="border: 1px solid #ddd; padding: 8px">
-        {{#requiereAvion}}Sí{{/requiereAvion}}
-        {{^requiereAvion}}No{{/requiereAvion}}
-      </td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px"><b>Área</b></td>
-      <td style="border: 1px solid #ddd; padding: 8px">{{area}}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid #ddd; padding: 8px">
-        <b>Fondos de Fábrica</b>
-      </td>
-      <td style="border: 1px solid #ddd; padding: 8px">
-        {{#fondos_fabrica}}Sí{{/fondos_fabrica}}
-        {{^fondos_fabrica}}No{{/fondos_fabrica}}
-      </td>
-    </tr>
-  </table>
+  <!-- Cuerpo del mensaje -->
+  <div style="padding: 24px">
+    <p style="margin-top: 0; font-size: 15px">
+      Estimado(a),
+    </p>
 
-  <p style="margin-top: 20px">
-    👉 Para aprobar o rechazar esta visita, por favor ingrese a la plataforma de
-    gestión de visitas.
-  </p>
+    <p style="margin-top: 0; font-size: 15px; line-height: 1.5">
+      Se ha registrado una nueva solicitud de visita en la plataforma de gestión.
+      A continuación encontrarás los detalles relevantes de la solicitud:
+    </p>
 
-  <p style="margin-top: 30px; font-size: 12px; color: #666">
-    Este es un correo automático, por favor no responder.
-  </p>
+    <!-- Tabla de detalles -->
+    <table
+      style="
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 15px;
+        font-size: 14px;
+      "
+    >
+      <tbody>
+        <tr style="background-color: #f8f9fa">
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Colaborador
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{usuario}}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Cliente
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{cliente}}</td>
+        </tr>
+        <tr style="background-color: #f8f9fa">
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Motivo de la visita
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{motivo}}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Persona a visitar
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{personaVisita}}</td>
+        </tr>
+        <tr style="background-color: #f8f9fa">
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Ciudad de origen
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{ciudad_origen}}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Ciudad de destino
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">
+            {{ciudad}}, {{pais}}
+          </td>
+        </tr>
+        <tr style="background-color: #f8f9fa">
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Fechas del viaje
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">
+            <b>Salida:</b> {{fecha_ida}} <br />
+            <b>Regreso:</b> {{fecha_regreso}}
+          </td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Tipo de visita
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">
+            {{#requiereAvion}}Con desplazamiento aéreo{{/requiereAvion}}
+            {{^requiereAvion}}Terrestre{{/requiereAvion}}
+          </td>
+        </tr>
+        <tr style="background-color: #f8f9fa">
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Fondos de fábrica
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">
+            {{#fondos_fabrica}}Sí{{/fondos_fabrica}}
+            {{^fondos_fabrica}}No{{/fondos_fabrica}}
+          </td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold">
+            Área responsable
+          </td>
+          <td style="border: 1px solid #ddd; padding: 8px">{{area}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Instrucción o botón -->
+    {{#aprobacionLink}}
+    <div style="text-align: center; margin-top: 28px">
+      <a
+        href="{{aprobacionLink}}"
+        style="
+          background-color: #007bff;
+          color: white;
+          padding: 14px 28px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-weight: bold;
+          display: inline-block;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        "
+      >
+        Aprobar Solicitud de Visita
+      </a>
+    </div>
+
+    <p style="text-align: center; font-size: 13px; color: #666; margin-top: 12px">
+      Este enlace es único y válido por 7 días.
+    </p>
+    {{/aprobacionLink}}
+
+    {{^aprobacionLink}}
+    <p style="margin-top: 22px; font-size: 14px; line-height: 1.5">
+      👉 Para aprobar o rechazar esta visita, por favor ingrese a la plataforma de gestión de visitas.
+    </p>
+    {{/aprobacionLink}}
+
+    <!-- Línea divisoria -->
+    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee" />
+
+    <p style="font-size: 12px; color: #888; text-align: center">
+      Este es un mensaje automático del Sistema de Gestión de Visitas.<br />
+      Por favor no responda a este correo.
+    </p>
+  </div>
 </div>

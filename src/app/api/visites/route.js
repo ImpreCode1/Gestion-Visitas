@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@prisma/client";
 import getTemplate from "../../../lib/emails";
+import { SignJWT } from "jose";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -132,7 +133,6 @@ export async function POST(request) {
   }
 
   try {
-    // Verificar token y obtener datos del usuario
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const { email, department: area } = payload;
 
@@ -146,7 +146,6 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    console.log("📩 Datos recibidos para nueva visita:", body);
 
     // Crear nueva visita
     const nuevaVisita = await prisma.visita.create({
@@ -185,17 +184,15 @@ export async function POST(request) {
 
     if (body.requiereAvion === true) {
       aprobaciones = [
-        {
-          visitaId: nuevaVisita.id,
-          rol: "vicepresidencia",
-          estado: "pendiente",
-        },
+        { visitaId: nuevaVisita.id, rol: "vicepresidencia", estado: "pendiente",},
         { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
         { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
     } else if (body.fondos_fabrica === true) {
       aprobaciones = [
         { visitaId: nuevaVisita.id, rol: "notas_credito", estado: "pendiente" },
+        { visitaId: nuevaVisita.id, rol: "tiquetes", estado: "pendiente" },
+        { visitaId: nuevaVisita.id, rol: "transporte", estado: "pendiente" },
       ];
     } else {
       aprobaciones = [
@@ -209,7 +206,40 @@ export async function POST(request) {
       aprobaciones.map((a) => a.rol)
     );
 
+    // ==========================================================
+    // GENERACIÓN DE LINK DE APROBACIÓN (solo VP o Notas Crédito)
+    // ==========================================================
+    let aprobacionLink = null;
+
+    if (body.requiereAvion === true || body.fondos_fabrica === true) {
+      const rolAprobador = body.requiereAvion
+        ? "vicepresidencia"
+        : "notas_credito";
+
+      // Busca la aprobación creada con ese rol
+      const aprobacion = await prisma.aprobacion.findFirst({
+        where: {
+          visitaId: nuevaVisita.id,
+          rol: rolAprobador,
+        },
+      });
+
+      if (aprobacion) {
+        const tokenAprobacion = await new SignJWT({
+          aprobacionId: aprobacion.id,
+          action: "aprobar",
+        })
+          .setProtectedHeader({ alg: "HS256" })
+          .setExpirationTime("7d")
+          .sign(JWT_SECRET);
+
+        aprobacionLink = `${request.nextUrl.origin}/api/approvals/${aprobacion.id}/aprobar?token=${tokenAprobacion}`;
+      }
+    }
+
+    // ==========================================================
     // Determinar destinatarios de correo
+    // ==========================================================
     let destinatarios = [];
 
     if (body.requiereAvion === true) {
@@ -231,7 +261,9 @@ export async function POST(request) {
 
     console.log("📧 Destinatarios del correo:", destinatarios);
 
-    // Construir plantilla del correo
+    // ==========================================================
+    // Construir plantilla del correo (con enlace si aplica)
+    // ==========================================================
     const html = getTemplate("agendar", {
       usuario: usuario.name,
       cliente: nuevaVisita.cliente,
@@ -245,9 +277,12 @@ export async function POST(request) {
       requiereAvion: nuevaVisita.requiereAvion,
       area: nuevaVisita.area,
       fondos_fabrica: nuevaVisita.fondos_fabrica,
+      aprobacionLink, // 👈 nuevo parámetro
     });
 
+    // ==========================================================
     // Enviar correo
+    // ==========================================================
     if (destinatarios.length > 0) {
       try {
         const response = await fetch(

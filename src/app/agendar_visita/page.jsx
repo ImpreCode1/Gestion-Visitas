@@ -140,11 +140,6 @@ export default function AgendarVisitaPage() {
       ).toLocaleString("es-CO")}</p>
       <hr style="margin: 12px 0; border: 0; border-top: 1px solid #e5e7eb;" />
       <p style="font-size: 13px; color: #6b7280;">
-        ✈️ ${
-          formData.requiereAvion
-            ? "Incluye transporte aéreo"
-            : "No requiere transporte aéreo"
-        }<br />
         💰 ${
           formData.fondos_fabrica
             ? "Financiada con fondos de fábrica"
@@ -360,6 +355,40 @@ export default function AgendarVisitaPage() {
               </h3>
             </div>
 
+            {/* 🔘 Fondos de fábrica primero */}
+            <div className="flex items-center justify-between py-2 group relative">
+              <label
+                className={`text-sm font-medium flex items-center gap-1`}
+              >
+                {formData.fondos_fabrica
+                  ? "La visita cuenta con fondos de fábrica."
+                  : "La visita NO cuenta con fondos de fábrica."}
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
+                  Indica si la visita será cubierta con fondos de fábrica.
+                </div>
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    fondos_fabrica: !formData.fondos_fabrica,
+                    requiereAvion: false, // 🔹 si hay fondos, desactiva tiquetes
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.fondos_fabrica ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.fondos_fabrica ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Campos principales */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Ciudad de origen */}
               <div className="relative">
@@ -427,9 +456,8 @@ export default function AgendarVisitaPage() {
               </div>
             </div>
 
-            {/* Fechas (en su propio bloque) */}
+            {/* Fechas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Fecha de salida */}
               <div>
                 <label
                   htmlFor="fecha_ida"
@@ -449,7 +477,6 @@ export default function AgendarVisitaPage() {
                 />
               </div>
 
-              {/* Fecha de regreso */}
               <div>
                 <label
                   htmlFor="fecha_regreso"
@@ -470,7 +497,7 @@ export default function AgendarVisitaPage() {
               </div>
             </div>
 
-            {/* 🟨 Cuadro de advertencia dinámico (debajo de ambas fechas) */}
+            {/* Advertencia de fechas */}
             {alertaFecha && (
               <div
                 className={`mt-2 text-sm rounded-lg p-3 border transition-all ${
@@ -483,12 +510,17 @@ export default function AgendarVisitaPage() {
               </div>
             )}
 
-            {/* Switches con tooltips */}
-            <div className="space-y-3">
-              {/* Requiere avión */}
+            {/* 🔘 Switch de tiquetes aéreos (solo si NO hay fondos) */}
+            {!formData.fondos_fabrica && (
               <div className="flex items-center justify-between py-2 group relative">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                  ¿La visita requiere tiquetes aéreos?
+                <label
+                  className={`text-sm font-medium flex items-center gap-1 ${
+                    formData.requiereAvion ? "text-blue-700" : "text-gray-700"
+                  }`}
+                >
+                  {formData.requiereAvion
+                    ? "La visita requiere tiquetes aéreos."
+                    : "La visita NO requiere tiquetes aéreos."}
                   <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
                     Actívalo si el viaje requiere transporte aéreo.
                   </div>
@@ -512,37 +544,7 @@ export default function AgendarVisitaPage() {
                   />
                 </button>
               </div>
-
-              {/* Fondos de fábrica */}
-              <div className="flex items-center justify-between py-2 group relative">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                  ¿La visita cuenta con fondos de fábrica?
-                  <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 bg-gray-800 text-white text-xs rounded-md px-2 py-1 top-[-40px] left-0 shadow-md whitespace-nowrap">
-                    Indica si la visita será cubierta con fondos de fábrica.
-                  </div>
-                </label>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      fondos_fabrica: !formData.fondos_fabrica,
-                    })
-                  }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.fondos_fabrica ? "bg-blue-600" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.fondos_fabrica
-                        ? "translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
+            )}
           </section>
 
           {/* Botón final */}

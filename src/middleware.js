@@ -270,5 +270,5 @@ export async function middleware(request) {
 // Configuración de Next
 // ======================
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|uploads|sin_acceso).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|uploads|sin_acceso|confirmacion).*)"],
 };
