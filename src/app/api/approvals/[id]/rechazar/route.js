@@ -1,81 +1,65 @@
-/**
- * @fileoverview Endpoint para registrar el rechazo de una aprobación.
- * Actualiza el estado de la aprobación y la visita asociada, y notifica al gerente por correo electrónico.
- */
-
 import { NextResponse } from "next/server";
-import { PrismaClient, EstadoVisita } from "@prisma/client";
-import getTemplate from "../../../../../lib/emails"; // Ajustar la ruta según la estructura del proyecto
+import { PrismaClient, EstadoAprobacion, EstadoVisita } from "@prisma/client";
+import { jwtVerify } from "jose";
 
-// Inicializa Prisma Client
 const prisma = new PrismaClient();
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function POST(req, { params }) {
+export async function POST(req, context) {
+  const params = await context.params;
+
   try {
-    // Obtiene el comentario del cuerpo de la solicitud
+    const id = parseInt(params.id);
+
+    const token = req.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    await jwtVerify(token, JWT_SECRET);
+
     const { comentario } = await req.json();
 
-    // Actualiza la aprobación específica, marcándola como rechazada
-    // e incluye la información de la visita, el gerente y todas las aprobaciones relacionadas
-    const aprobacion = await prisma.aprobacion.update({
-      where: { id: parseInt(params.id) },
+    const aprobacion = await prisma.aprobacion.findUnique({
+      where: { id },
+      include: { visita: true },
+    });
+
+    if (!aprobacion) {
+      return NextResponse.json({ error: "Aprobación no encontrada" }, { status: 404 });
+    }
+
+    if (aprobacion.estado !== EstadoAprobacion.pendiente) {
+      return NextResponse.json({ error: "La aprobación ya fue procesada" }, { status: 400 });
+    }
+
+    const updated = await prisma.aprobacion.update({
+      where: { id },
       data: {
-        estado: "rechazado",
-        comentario,
-        updatedAt: new Date(),
-      },
-      include: {
-        visita: {
-          include: {
-            gerente: true,
-            aprobaciones: true,
-          },
-        },
+        estado: EstadoAprobacion.rechazado,
+        comentario: comentario || null,
       },
     });
 
-    const visita = aprobacion.visita;
-    const aprobaciones = visita.aprobaciones;
-
-    // Si alguna de las aprobaciones de la visita está rechazada,
-    // se actualiza el estado general de la visita como "rechazada"
-    const algunaRechazada = aprobaciones.some((a) => a.estado === "rechazado");
-    if (algunaRechazada) {
-      await prisma.visita.update({
-        where: { id: visita.id },
-        data: { estado: EstadoVisita.rechazada },
+    if (aprobacion.rol === "vicepresidencia") {
+      await prisma.aprobacion.updateMany({
+        where: {
+          visitaId: aprobacion.visitaId,
+          rol: { in: ["tiquetes", "transporte"] },
+          estado: EstadoAprobacion.pendiente,
+        },
+        data: { estado: EstadoAprobacion.rechazado },
       });
     }
 
-    // Genera el cuerpo HTML del correo usando la plantilla correspondiente
-    const html = getTemplate("rechazar", {
-      usuario: visita.gerente.name,
-      cliente: visita.cliente,
-      motivo: visita.motivo,
-      fecha_ida: new Date(visita.fecha_ida).toLocaleDateString(),
-      fecha_regreso: new Date(visita.fecha_regreso).toLocaleDateString(),
-      comentario,
+    await prisma.visita.update({
+      where: { id: aprobacion.visitaId },
+      data: { estado: EstadoVisita.rechazada },
     });
 
-    // Envía el correo de notificación al gerente informando el rechazo
-    await fetch(`${req.nextUrl.origin}/api/send-mail`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: [visita.gerente.email],
-        subject: `Tu visita a ${visita.cliente} fue rechazada`,
-        html,
-      }),
-    });
-
-    // Retorna la aprobación actualizada como respuesta
-    return NextResponse.json(aprobacion);
+    return NextResponse.json(updated, { status: 200 });
   } catch (err) {
-    // Captura y registra errores en consola
-    console.error("Error en /rechazar:", err);
-    return NextResponse.json(
-      { error: "Error al rechazar" },
-      { status: 500 }
-    );
+    console.error("Error al rechazar:", err);
+    return NextResponse.json({ error: "Error al rechazar" }, { status: 500 });
   }
 }

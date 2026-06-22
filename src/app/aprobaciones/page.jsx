@@ -118,7 +118,7 @@ export default function VerAprobaciones() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/approvals?${qp}`, { signal });
+      const res = await fetch(`/api/approvals?${qp}`, { signal, credentials: "include" });
       if (!res.ok) {
         if (res.status === 403) {
           throw new Error("No tienes permisos para aprobar visitas");
@@ -181,6 +181,7 @@ export default function VerAprobaciones() {
       const res = await fetch(`/api/approvals/${id}/${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
       if (!res.ok) {
