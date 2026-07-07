@@ -21,9 +21,13 @@ export async function POST(req) {
 
     // Configura el transporte SMTP para Nodemailer con las variables de entorno
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST, // Servidor SMTP
-      port: process.env.EMAIL_PORT, // Puerto SMTP
-      secure: false, // true para puerto 465 (SSL), false para STARTTLS o sin cifrado
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     });
 
     // Envía el correo electrónico con el contenido proporcionado

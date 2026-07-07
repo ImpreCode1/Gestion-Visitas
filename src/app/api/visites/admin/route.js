@@ -51,6 +51,8 @@ export async function GET() {
       lugar: v.lugar,
       fecha_ida: v.fecha_ida,
       fecha_regreso: v.fecha_regreso,
+      ciudad_origen: v.ciudad_origen,
+      ciudad: v.ciudad,
       estado: v.estado,
       gerente: v.gerente,
       tieneFacturas: !!v.facturas,

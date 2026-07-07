@@ -136,4 +136,9 @@ enum RolAprobacion {
 
 enum TipoVisita {
   por_definir
+  comercial
+  tecnica
+  capacitacion
+  auditoria
+  otros
 }

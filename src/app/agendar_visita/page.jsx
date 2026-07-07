@@ -112,6 +112,7 @@ export default function AgendarVisitaPage() {
       const res = await fetch("/api/visites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
