@@ -24,6 +24,8 @@ model User {
 
   // Relaciones
   visitasRegistradas Visita[] @relation("VisitasGerente")
+
+  @@map("user")
 }
 
 model Visita {
@@ -72,6 +74,8 @@ model Visita {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("visita")
 }
 
 
@@ -83,6 +87,8 @@ model Factura {
   descripcion String?
   montoTotal  Float?
   createdAt   DateTime         @default(now())
+
+  @@map("factura")
 }
 
 model ArchivoFactura {
@@ -92,6 +98,8 @@ model ArchivoFactura {
   nombre    String // nombre original del archivo
   url       String // ruta donde quedó guardado (S3, disco, etc.)
   createdAt DateTime @default(now())
+
+  @@map("archivofactura")
 }
 
 model Aprobacion {
@@ -106,6 +114,8 @@ model Aprobacion {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("aprobacion")
 }
 
 enum EstadoVisita {
