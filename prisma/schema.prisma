@@ -23,8 +23,9 @@ model User {
   updatedAt DateTime  @updatedAt
 
   // Relaciones
-  visitasRegistradas  Visita[]              @relation("VisitasGerente")
+  visitasRegistradas    Visita[]              @relation("VisitasGerente")
   historialAprobaciones HistorialAprobacion[] @relation("HistorialAprobaciones")
+  facturasRevisadas     Factura[]             @relation("FacturasRevisadas")
 
   @@map("user")
 }
@@ -89,6 +90,12 @@ model Factura {
   montoTotal  Float?
   createdAt   DateTime         @default(now())
 
+  estado             EstadoFactura @default(pendiente)
+  revisadoPorId      Int?
+  revisadoPor        User?         @relation("FacturasRevisadas", fields: [revisadoPorId], references: [id])
+  fechaRevision      DateTime?
+  comentarioRevision String?
+
   @@map("factura")
 }
 
@@ -139,7 +146,14 @@ enum EstadoVisita {
   pendiente
   aprobada
   rechazada
+  en_legalizacion
   completada
+}
+
+enum EstadoFactura {
+  pendiente
+  aprobada
+  rechazada
 }
 
 enum EstadoAprobacion {
