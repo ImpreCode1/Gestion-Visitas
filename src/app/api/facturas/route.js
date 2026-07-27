@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import fs from "fs";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, EstadoVisita } from "@prisma/client";
 import getTemplate from "../../../lib/emails";
 
 // Inicializa Prisma Client
@@ -77,6 +77,7 @@ export async function POST(req) {
         data: {
           descripcion: descripcion ?? factura.descripcion,
           montoTotal: monto ? parseFloat(monto) : factura.montoTotal,
+          estado: "pendiente",
         },
       });
     }
@@ -144,7 +145,7 @@ export async function POST(req) {
     // Actualiza el estado de la visita como completada
     await prisma.visita.update({
       where: { id: visitaId },
-      data: { estado: "completada" },
+      data: { estado: EstadoVisita.en_legalizacion },
     });
 
     // Devuelve respuesta con la factura y archivos guardados

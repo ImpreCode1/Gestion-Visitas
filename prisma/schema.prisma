@@ -23,7 +23,11 @@ model User {
   updatedAt DateTime  @updatedAt
 
   // Relaciones
-  visitasRegistradas Visita[] @relation("VisitasGerente")
+  visitasRegistradas    Visita[]              @relation("VisitasGerente")
+  historialAprobaciones HistorialAprobacion[] @relation("HistorialAprobaciones")
+  facturasRevisadas     Factura[]             @relation("FacturasRevisadas")
+
+  @@map("user")
 }
 
 model Visita {
@@ -72,6 +76,8 @@ model Visita {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("visita")
 }
 
 
@@ -83,6 +89,14 @@ model Factura {
   descripcion String?
   montoTotal  Float?
   createdAt   DateTime         @default(now())
+
+  estado             EstadoFactura @default(pendiente)
+  revisadoPorId      Int?
+  revisadoPor        User?         @relation("FacturasRevisadas", fields: [revisadoPorId], references: [id])
+  fechaRevision      DateTime?
+  comentarioRevision String?
+
+  @@map("factura")
 }
 
 model ArchivoFactura {
@@ -92,6 +106,8 @@ model ArchivoFactura {
   nombre    String // nombre original del archivo
   url       String // ruta donde quedó guardado (S3, disco, etc.)
   createdAt DateTime @default(now())
+
+  @@map("archivofactura")
 }
 
 model Aprobacion {
@@ -106,13 +122,38 @@ model Aprobacion {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  historial HistorialAprobacion[]
+
+  @@map("aprobacion")
+}
+
+model HistorialAprobacion {
+  id             Int              @id @default(autoincrement())
+  aprobacionId   Int
+  aprobacion     Aprobacion       @relation(fields: [aprobacionId], references: [id])
+  usuarioId      Int
+  usuario        User             @relation("HistorialAprobaciones", fields: [usuarioId], references: [id])
+  estadoAnterior EstadoAprobacion
+  estadoNuevo    EstadoAprobacion
+  comentario     String?
+  fecha          DateTime         @default(now())
+
+  @@map("historial_aprobacion")
 }
 
 enum EstadoVisita {
   pendiente
   aprobada
   rechazada
+  en_legalizacion
   completada
+}
+
+enum EstadoFactura {
+  pendiente
+  aprobada
+  rechazada
 }
 
 enum EstadoAprobacion {

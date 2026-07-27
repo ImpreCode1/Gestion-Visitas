@@ -90,7 +90,14 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+
+    const usuario = await prisma.user.findFirst({
+      where: { email: payload.email, deletedAt: null },
+    });
+    if (!usuario) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
 
     const { comentario } = await req.json();
 
@@ -107,26 +114,40 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "La aprobación ya fue procesada" }, { status: 400 });
     }
 
-    const updated = await prisma.aprobacion.update({
-      where: { id },
-      data: {
-        estado: EstadoAprobacion.aprobado,
-        comentario: comentario || null,
-      },
-    });
-
-    const todas = await prisma.aprobacion.findMany({
-      where: { visitaId: aprobacion.visitaId },
-    });
-
-    const todasAprobadas = todas.every((a) => a.estado === EstadoAprobacion.aprobado);
-
-    if (todasAprobadas) {
-      await prisma.visita.update({
-        where: { id: aprobacion.visitaId },
-        data: { estado: EstadoVisita.aprobada },
+    const [updated] = await prisma.$transaction(async (tx) => {
+      const updated = await tx.aprobacion.update({
+        where: { id },
+        data: {
+          estado: EstadoAprobacion.aprobado,
+          comentario: comentario || null,
+        },
       });
-    }
+
+      await tx.historialAprobacion.create({
+        data: {
+          aprobacionId: id,
+          usuarioId: usuario.id,
+          estadoAnterior: EstadoAprobacion.pendiente,
+          estadoNuevo: EstadoAprobacion.aprobado,
+          comentario: comentario || null,
+        },
+      });
+
+      const todas = await tx.aprobacion.findMany({
+        where: { visitaId: aprobacion.visitaId },
+      });
+
+      const todasAprobadas = todas.every((a) => a.estado === EstadoAprobacion.aprobado);
+
+      if (todasAprobadas) {
+        await tx.visita.update({
+          where: { id: aprobacion.visitaId },
+          data: { estado: EstadoVisita.aprobada },
+        });
+      }
+
+      return [updated];
+    });
 
     return NextResponse.json(updated, { status: 200 });
   } catch (err) {
