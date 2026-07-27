@@ -16,7 +16,14 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+
+    const usuario = await prisma.user.findFirst({
+      where: { email: payload.email, deletedAt: null },
+    });
+    if (!usuario) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
 
     const { comentario } = await req.json();
 
@@ -33,28 +40,60 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "La aprobación ya fue procesada" }, { status: 400 });
     }
 
-    const updated = await prisma.aprobacion.update({
-      where: { id },
-      data: {
-        estado: EstadoAprobacion.rechazado,
-        comentario: comentario || null,
-      },
-    });
-
-    if (aprobacion.rol === "vicepresidencia") {
-      await prisma.aprobacion.updateMany({
-        where: {
-          visitaId: aprobacion.visitaId,
-          rol: { in: ["tiquetes", "transporte"] },
-          estado: EstadoAprobacion.pendiente,
+    const [updated] = await prisma.$transaction(async (tx) => {
+      const updated = await tx.aprobacion.update({
+        where: { id },
+        data: {
+          estado: EstadoAprobacion.rechazado,
+          comentario: comentario || null,
         },
-        data: { estado: EstadoAprobacion.rechazado },
       });
-    }
 
-    await prisma.visita.update({
-      where: { id: aprobacion.visitaId },
-      data: { estado: EstadoVisita.rechazada },
+      await tx.historialAprobacion.create({
+        data: {
+          aprobacionId: id,
+          usuarioId: usuario.id,
+          estadoAnterior: EstadoAprobacion.pendiente,
+          estadoNuevo: EstadoAprobacion.rechazado,
+          comentario: comentario || null,
+        },
+      });
+
+      if (aprobacion.rol === "vicepresidencia") {
+        const afectadas = await tx.aprobacion.findMany({
+          where: {
+            visitaId: aprobacion.visitaId,
+            rol: { in: ["tiquetes", "transporte"] },
+            estado: EstadoAprobacion.pendiente,
+          },
+        });
+
+        if (afectadas.length > 0) {
+          await tx.aprobacion.updateMany({
+            where: {
+              id: { in: afectadas.map((a) => a.id) },
+            },
+            data: { estado: EstadoAprobacion.rechazado },
+          });
+
+          await tx.historialAprobacion.createMany({
+            data: afectadas.map((a) => ({
+              aprobacionId: a.id,
+              usuarioId: usuario.id,
+              estadoAnterior: a.estado,
+              estadoNuevo: EstadoAprobacion.rechazado,
+              comentario: "Rechazo en cascada por vicepresidencia",
+            })),
+          });
+        }
+      }
+
+      await tx.visita.update({
+        where: { id: aprobacion.visitaId },
+        data: { estado: EstadoVisita.rechazada },
+      });
+
+      return [updated];
     });
 
     return NextResponse.json(updated, { status: 200 });

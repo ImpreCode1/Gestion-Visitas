@@ -23,7 +23,8 @@ model User {
   updatedAt DateTime  @updatedAt
 
   // Relaciones
-  visitasRegistradas Visita[] @relation("VisitasGerente")
+  visitasRegistradas  Visita[]              @relation("VisitasGerente")
+  historialAprobaciones HistorialAprobacion[] @relation("HistorialAprobaciones")
 
   @@map("user")
 }
@@ -115,7 +116,23 @@ model Aprobacion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  historial HistorialAprobacion[]
+
   @@map("aprobacion")
+}
+
+model HistorialAprobacion {
+  id             Int              @id @default(autoincrement())
+  aprobacionId   Int
+  aprobacion     Aprobacion       @relation(fields: [aprobacionId], references: [id])
+  usuarioId      Int
+  usuario        User             @relation("HistorialAprobaciones", fields: [usuarioId], references: [id])
+  estadoAnterior EstadoAprobacion
+  estadoNuevo    EstadoAprobacion
+  comentario     String?
+  fecha          DateTime         @default(now())
+
+  @@map("historial_aprobacion")
 }
 
 enum EstadoVisita {
