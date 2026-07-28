@@ -1,0 +1,13 @@
+node_modules/
+__pycache__/
+*.pyc
+.env
+.next/
+venv/
+.Python
+*.egg-info/
+dist/
+build/
+.next/
+*.tsbuildinfo
+next-env.d.ts
