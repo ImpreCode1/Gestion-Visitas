@@ -16,7 +16,7 @@ def list_conciliaciones(skip: int = 0, limit: int = 100, db: Session = Depends(d
 def get_conciliacion(conciliacion_id: int, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, conciliacion_id)
     if not obj:
-        raise HTTPException(404, detail="Conciliación no encontrada")
+        raise HTTPException(404, detail="ConciliaciÃ³n no encontrada")
     return obj
 
 
@@ -29,7 +29,7 @@ def create_conciliacion(obj_in: ConciliacionCreate, db: Session = Depends(deps.g
 def update_conciliacion(conciliacion_id: int, obj_in: ConciliacionUpdate, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, conciliacion_id)
     if not obj:
-        raise HTTPException(404, detail="Conciliación no encontrada")
+        raise HTTPException(404, detail="ConciliaciÃ³n no encontrada")
     return crud.update(db, obj, obj_in)
 
 
@@ -37,6 +37,6 @@ def update_conciliacion(conciliacion_id: int, obj_in: ConciliacionUpdate, db: Se
 def delete_conciliacion(conciliacion_id: int, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, conciliacion_id)
     if not obj:
-        raise HTTPException(404, detail="Conciliación no encontrada")
+        raise HTTPException(404, detail="ConciliaciÃ³n no encontrada")
     crud.remove(db, conciliacion_id)
     return {"ok": True}

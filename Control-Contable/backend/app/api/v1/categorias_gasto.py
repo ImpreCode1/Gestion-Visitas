@@ -16,7 +16,7 @@ def list_categorias(skip: int = 0, limit: int = 100, db: Session = Depends(deps.
 def get_categoria(categoria_id: int, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, categoria_id)
     if not obj:
-        raise HTTPException(404, detail="Categoría no encontrada")
+        raise HTTPException(404, detail="CategorÃ­a no encontrada")
     return obj
 
 
@@ -29,7 +29,7 @@ def create_categoria(obj_in: CategoriaGastoCreate, db: Session = Depends(deps.ge
 def update_categoria(categoria_id: int, obj_in: CategoriaGastoUpdate, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, categoria_id)
     if not obj:
-        raise HTTPException(404, detail="Categoría no encontrada")
+        raise HTTPException(404, detail="CategorÃ­a no encontrada")
     return crud.update(db, obj, obj_in)
 
 
@@ -37,6 +37,6 @@ def update_categoria(categoria_id: int, obj_in: CategoriaGastoUpdate, db: Sessio
 def delete_categoria(categoria_id: int, db: Session = Depends(deps.get_db)):
     obj = crud.get(db, categoria_id)
     if not obj:
-        raise HTTPException(404, detail="Categoría no encontrada")
+        raise HTTPException(404, detail="CategorÃ­a no encontrada")
     crud.remove(db, categoria_id)
     return {"ok": True}

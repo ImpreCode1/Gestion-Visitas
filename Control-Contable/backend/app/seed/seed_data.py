@@ -1,7 +1,7 @@
-\"\"\"
+"""
 Database seeding script.
 Run with: python -m app.seed.seed_data
-\"\"\"
+"""
 
 from app.core.database import SessionLocal, engine, Base
 from app.models import (
@@ -13,20 +13,20 @@ from datetime import date
 
 SEED_PROVEEDORES = [
     {"nombre": "Suministros SAS", "nit": "900123456-7", "contacto": "Carlos", "telefono": "3001112233"},
-    {"nombre": "Tecnología Integral Ltda", "nit": "800789012-3", "contacto": "Ana", "telefono": "3004445566"},
+    {"nombre": "TecnologÃ­a Integral Ltda", "nit": "800789012-3", "contacto": "Ana", "telefono": "3004445566"},
     {"nombre": "Oficina Express", "nit": "901345678-9", "contacto": "Pedro", "telefono": "3007778899"},
 ]
 
 SEED_CLIENTES = [
     {"nombre": "Empresa Demo SA", "nit": "890123456-1", "contacto": "Luis", "telefono": "3101112233"},
-    {"nombre": "Corporación Andina", "nit": "830567890-2", "contacto": "Maria", "telefono": "3104445566"},
+    {"nombre": "CorporaciÃ³n Andina", "nit": "830567890-2", "contacto": "Maria", "telefono": "3104445566"},
 ]
 
 SEED_CENTROS = [
-    {"codigo": "CC-ADM", "nombre": "Administración"},
+    {"codigo": "CC-ADM", "nombre": "AdministraciÃ³n"},
     {"codigo": "CC-VEN", "nombre": "Ventas"},
     {"codigo": "CC-OPE", "nombre": "Operaciones"},
-    {"codigo": "CC-TI", "nombre": "Tecnología"},
+    {"codigo": "CC-TI", "nombre": "TecnologÃ­a"},
 ]
 
 SEED_CATEGORIAS = [
