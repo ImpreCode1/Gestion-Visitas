@@ -9,6 +9,7 @@ services:
       - DATABASE_URL=mysql://root:root@mysql:3306/visitas
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - SERVICE_TOKEN_SECRET=${SERVICE_TOKEN_SECRET}
       - BYPASS_LDAP=true
       - SMTP_HOST=mailpit
       - SMTP_PORT=1025
