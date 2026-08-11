@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { verifyServiceToken } from "@/lib/serviceAuth";
+import { verifyServiceToken } from "@/src/lib/serviceAuth";
 
 const prisma = new PrismaClient();
 
