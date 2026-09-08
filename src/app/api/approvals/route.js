@@ -2,19 +2,20 @@
  * @fileoverview Endpoint GET /api/aprobaciones
  * @description
  * Este endpoint retorna la lista de aprobaciones pendientes o históricas
- * según el rol del usuario autenticado (vicepresidente, aprobador o notas de crédito).
+ * según el rol del usuario actual (vicepresidente, aprobador o notas de crédito).
  *
- * Se realiza verificación JWT, filtrado dinámico por área, rol, estado y búsqueda textual.
+ * La validación JWT por sesión está deshabilitada (PRY-19); la identidad se
+ * resuelve con `resolverUsuario` (cabecera X-User-Email o fallback). Se aplica
+ * filtrado dinámico por área, rol, estado y búsqueda textual.
  * Aplica reglas jerárquicas para mantener el flujo correcto de aprobación.
  */
 
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoAprobacion } from "@prisma/client";
-import { jwtVerify } from "jose";
+import { resolverUsuario } from "../../../lib/currentUser";
 
-// Inicializa Prisma y la clave secreta del JWT
+// Inicializa Prisma
 const prisma = new PrismaClient();
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 /**
  * @async
@@ -24,21 +25,8 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
  */
 export async function GET(req) {
   try {
-    // ============================
-    // Verificación de token JWT
-    // ============================
-    const token = req.cookies.get("token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    // Verifica firma del token y obtiene payload
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-
-    // Busca el usuario asociado al token
-    const usuario = await prisma.user.findUnique({
-      where: { email: payload.email },
-    });
+    // Resuelve el usuario actual sin validación JWT (PRY-19)
+    const usuario = await resolverUsuario(req);
     if (!usuario) {
       return NextResponse.json(
         { error: "Usuario no encontrado" },

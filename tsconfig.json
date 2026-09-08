@@ -19,8 +19,6 @@
 
     /* === Next.js plugin === */
     "plugins": [{ "name": "next" }],
-
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }

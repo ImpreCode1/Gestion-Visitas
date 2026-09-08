@@ -1,24 +1,26 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { jwtVerify } from "jose";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function GET(req, context) {
-  const params = await context.params;
-  const url = new URL(req.url);
-  const token = url.searchParams.get("token");
-
+/**
+ * Devuelve el estado de una aprobación.
+ *
+ * La validación JWT por sesión está deshabilitada (PRY-19), por lo que el
+ * endpoint queda abierto sin verificación de token.
+ *
+ * @async
+ * @param {Request} req - Objeto de la solicitud HTTP entrante.
+ * @param {Object} context - Contexto de la ruta.
+ * @param {Promise<{id: string}>} context.params - Promesa con el id de la aprobación.
+ * @returns {Promise<Response>} Respuesta JSON con el estado de la aprobación.
+ */
+export async function GET(req, { params }) {
   try {
-    if (token) {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
-      if (payload.aprobacionId.toString() !== params.id)
-        return NextResponse.json({ error: "Token inválido" }, { status: 400 });
-    }
+    const { id } = await params;
 
     const aprobacion = await prisma.aprobacion.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       select: { estado: true },
     });
 

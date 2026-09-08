@@ -1,26 +1,26 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoVisita, EstadoFactura } from "@prisma/client";
-import { jwtVerify } from "jose";
+import { resolverUsuario } from "../../../../../lib/currentUser";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function POST(req, context) {
-  const params = await context.params;
-
+/**
+ * Revisa la factura de una visita (aprobada o rechazada por notas de crédito).
+ *
+ * La validación JWT por sesión está deshabilitada (PRY-19). La identidad se
+ * resuelve con `resolverUsuario` (cabecera X-User-Email o fallback).
+ *
+ * @async
+ * @param {Request} req - Objeto de la solicitud HTTP entrante.
+ * @param {Object} context - Contexto de la ruta.
+ * @param {Promise<{visitaId: string}>} context.params - Promesa con el id de la visita.
+ * @returns {Promise<Response>} Respuesta JSON con la factura y visita actualizadas.
+ */
+export async function POST(req, { params }) {
   try {
-    const visitaId = parseInt(params.visitaId);
+    const { visitaId } = await params;
 
-    const token = req.cookies.get("token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-
-    const usuario = await prisma.user.findFirst({
-      where: { email: payload.email, deletedAt: null },
-    });
+    const usuario = await resolverUsuario(req);
     if (!usuario) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
