@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { verifyServiceToken } from "@/src/lib/serviceAuth";
 
 const prisma = new PrismaClient();
 
+/**
+ * Devuelve las visitas con gastos de viaje para sincronización con Control-Contable.
+ *
+ * La validación por token de servicio (JWT) se ha deshabilitado (PRY-19:
+ * despliegue en plattstest sin Hydra IAM), por lo que el endpoint queda abierto.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP entrante.
+ * @returns {Promise<Response>} Respuesta JSON con los datos de gastos de viaje.
+ */
 export async function GET(request) {
-  const authResult = await verifyServiceToken(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
 
   try {
     const { searchParams } = new URL(request.url);

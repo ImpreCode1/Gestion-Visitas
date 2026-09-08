@@ -1,23 +1,27 @@
 /**
  * @fileoverview Endpoint para registrar la aprobación de una solicitud de visita.
  * Soporta dos modos:
- *  - Interno: aprobación desde el sistema autenticado (con comentario).
+ *  - Interno: aprobación desde el sistema (con comentario). La validación JWT de
+ *    sesión está deshabilitada (PRY-19); la identidad se resuelve con
+ *    `resolverUsuario` (cabecera X-User-Email o fallback).
  *  - Externo: aprobación directa desde link con token JWT (sin autenticación).
- * 
+ *
  * IMPORTANTE: GET solo valida, POST procesa la aprobación.
  */
 
 import { NextResponse } from "next/server";
 import { PrismaClient, EstadoVisita, EstadoAprobacion } from "@prisma/client";
 import { jwtVerify } from "jose";
-import getTemplate from "../../../../../lib/emails";
+import { resolverUsuario } from "../../../../../lib/currentUser";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 /**
- * GET - Solo valida el token y redirige al formulario
- * No realiza ninguna actualización en la base de datos
+ * GET - Solo valida el token del link externo y redirige al formulario.
+ * No realiza ninguna actualización en la base de datos.
+ * (El token del link se conserva: es el mecanismo del flujo de aprobación por
+ * correo, independiente de la autenticación de sesión.)
  */
 export async function GET(req, context) {
   const params = await context.params;
@@ -77,7 +81,8 @@ export async function GET(req, context) {
 }
 
 /**
- * POST - Procesa la aprobación desde el sistema (cookie JWT)
+ * POST - Procesa la aprobación desde el sistema (sin validación JWT de sesión).
+ * La identidad del usuario se resuelve con `resolverUsuario`.
  */
 export async function POST(req, context) {
   const params = await context.params;
@@ -85,16 +90,7 @@ export async function POST(req, context) {
   try {
     const id = parseInt(params.id);
 
-    const token = req.cookies.get("token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-
-    const usuario = await prisma.user.findFirst({
-      where: { email: payload.email, deletedAt: null },
-    });
+    const usuario = await resolverUsuario(req);
     if (!usuario) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }

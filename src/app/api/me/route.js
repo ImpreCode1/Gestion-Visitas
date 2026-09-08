@@ -1,40 +1,34 @@
 /**
- * @fileoverview Endpoint para obtener información del usuario autenticado.
- * Verifica el token JWT almacenado en cookies y devuelve los datos del usuario
- * incluidos en el payload del token.
+ * @fileoverview Endpoint para obtener información del usuario actual.
+ *
+ * La validación JWT por sesión está deshabilitada en las rutas API (PRY-19).
+ * La identidad se resuelve con `resolverUsuario` (cabecera X-User-Email o
+ * fallback al primer usuario activo de la base de datos).
  */
 
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose"; // Librería para verificar JWTs
+import { resolverUsuario } from "../../../lib/currentUser";
 
-// Codifica la clave secreta usada para firmar los tokens JWT
-const encoder = new TextEncoder();
-const accessSecret = encoder.encode(process.env.JWT_SECRET);
-
+/**
+ * Obtiene la información del usuario actual.
+ *
+ * @async
+ * @param {Request} request - Objeto de la solicitud HTTP entrante.
+ * @returns {Promise<Response>} Respuesta JSON con los datos del usuario o un
+ * error 404 si no existe ningún usuario disponible.
+ */
 export async function GET(request) {
-  // Obtiene el token de acceso desde las cookies del cliente
-  const token = request.cookies.get("token")?.value;
+  const usuario = await resolverUsuario(request);
 
-  // Si no hay token, se responde con un estado 401 (no autorizado)
-  if (!token) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!usuario) {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
 
-  try {
-    // Verifica la validez del token JWT utilizando la clave secreta
-    const { payload } = await jwtVerify(token, accessSecret);
-
-    // Devuelve los datos del usuario contenidos en el token
-    return NextResponse.json({
-      displayName: payload.displayName || "",
-      email: payload.email || "",
-      department: payload.department || "",
-      title: payload.title || "",
-      role: payload.role || "sinRol",
-    });
-  } catch (err) {
-    // Si el token es inválido o ha expirado, devuelve un error 401
-    console.error("Token inválido:", err);
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
+  return NextResponse.json({
+    displayName: usuario.name || "",
+    email: usuario.email || "",
+    department: usuario.department || "",
+    title: usuario.position || "",
+    role: usuario.role || "sinRol",
+  });
 }

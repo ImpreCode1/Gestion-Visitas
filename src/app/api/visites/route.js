@@ -6,10 +6,10 @@
  */
 
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
 import { PrismaClient } from "@prisma/client";
 import getTemplate from "../../../lib/emails";
 import { SignJWT } from "jose";
+import { resolverUsuario } from "../../../lib/currentUser";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -24,21 +24,8 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
  */
 export async function GET(request) {
   try {
-    // Obtiene el token JWT desde la cookie
-    const token = request.cookies.get("token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    // Verifica el token y obtiene el email del usuario
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const email = payload.email;
-    if (!email) {
-      return NextResponse.json({ error: "Usuario no válido" }, { status: 400 });
-    }
-
-    // Busca el usuario en la base de datos
-    const usuario = await prisma.user.findUnique({ where: { email } });
+    // Resuelve el usuario actual sin validación JWT (PRY-19)
+    const usuario = await resolverUsuario(request);
     if (!usuario) {
       return NextResponse.json(
         { error: "Usuario no encontrado" },
@@ -126,24 +113,18 @@ export async function GET(request) {
  * y notifica por correo electrónico a los responsables correspondientes.
  */
 export async function POST(request) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) {
-    console.error("❌ Error: No se encontró el token en las cookies.");
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
-
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const { email, department: area } = payload;
-
-    const usuario = await prisma.user.findUnique({ where: { email } });
+    // Resuelve el usuario actual sin validación JWT (PRY-19)
+    const usuario = await resolverUsuario(request);
     if (!usuario) {
-      console.error("❌ Error: Usuario no encontrado en base de datos:", email);
+      console.error("❌ Error: Usuario no encontrado en base de datos");
       return NextResponse.json(
         { error: "Usuario no encontrado" },
         { status: 404 }
       );
     }
+
+    const area = usuario.department || "";
 
     const body = await request.json();
 
